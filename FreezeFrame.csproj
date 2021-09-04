@@ -7,8 +7,8 @@
     <ProjectGuid>{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>AvatarInitiate</RootNamespace>
-    <AssemblyName>AvatarInitiate</AssemblyName>
+    <RootNamespace>FreezeFrame</RootNamespace>
+    <AssemblyName>FreezeFrame</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>

@@ -1,16 +1,16 @@
-﻿using AvatarInitiate;
+﻿using FreezeFrame;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 
-[assembly: MelonInfo(typeof(FreezeFrame), "FreezeFrame", "1.0.0", "Eric")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.1", "Eric")]
 [assembly: MelonGame]
 
-namespace AvatarInitiate
+namespace FreezeFrame
 {
 
-    public class FreezeFrame : MelonMod
+    public class FreezeFrameMod : MelonMod
     {
         public override void OnApplicationStart()
         {
