@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31424.327
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FreezeFrame", "FreezeFrame.csproj", "{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AD9CAFD-65DE-41EA-A8C9-22F3B41CE2D3}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18C8C2C4-1A3F-4E7A-9019-66BFB53A3D21}
+	EndGlobalSection
+EndGlobal
