@@ -3,8 +3,9 @@ using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
+using VRChatUtilityKit.Utilities;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.1", "Eric")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.2", "Eric")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
@@ -14,7 +15,7 @@ namespace FreezeFrame
     {
         public override void OnApplicationStart()
         {
-            VRChatUtilityKit.Utilities.VRCUtils.OnUiManagerInit += Init;
+            VRCUtils.OnUiManagerInit += Init;
         }
 
         private void Init()
@@ -35,6 +36,28 @@ namespace FreezeFrame
                              "Deletes all Freeze Frames",
                              "FreezeDeleteBtn");
 
+            new SingleButton(GameObject.Find("UserInterface/QuickMenu/UserInteractMenu"),
+                            new Vector3(1, 3), "Create\r\nFreeze", delegate
+                            {
+                                var player = VRCUtils.ActivePlayerInQuickMenu.gameObject;
+                                MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
+                                EnsureHolderCreated();
+                                InstantiateAvatar(player);
+                            },
+                            "Create a new Freeze Frame of avatar",
+                            "FreezeCreateSingleBtn");
+
+            new SingleButton(GameObject.Find("UserInterface/QuickMenu/CameraMenu"),
+                            new Vector3(4, 1), "Create self\r\nFreeze", delegate
+                            {
+                                var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
+                                MelonLogger.Msg($"Creating Freeze Frame for yourself");
+                                EnsureHolderCreated();
+                                InstantiateAvatar(player);
+                            },
+                            "Create a new Freeze Frame of yourself",
+                            "FreezeCreateSingleBtn");
+
             MelonLogger.Msg("Buttons sucessfully created");
         }
 
@@ -50,39 +73,47 @@ namespace FreezeFrame
             }
         }
 
-        
-
-        public void Create()
+        public void EnsureHolderCreated()
         {
-            MelonLogger.Msg("Creating Freeze Frame");
             if (ClonesParent == null || !ClonesParent.scene.IsValid())
             {
                 ClonesParent = new GameObject("Avatar Clone Holder");
             }
+        }
+
+        public void Create()
+        {
+            MelonLogger.Msg("Creating Freeze Frame for all Avatars");
+            EnsureHolderCreated();
             var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
 
             foreach (var item in rootObjects)
             {
-                if(item.layer == LayerMask.NameToLayer("Player"))
-                {
-                    var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
-                    GameObject.Instantiate(obj, ClonesParent.transform, true);
-                }
-                if (item.layer == LayerMask.NameToLayer("PlayerLocal"))
-                {
-                    var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
-                    var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
-                    foreach (var copycomp in copy.GetComponents<Component>())
-                    {
-                        if (!(copycomp is Transform))
-                        {
-                            GameObject.Destroy(copycomp);
-                        }
-                    }
-                    UpdateLayerRecurive(copy);
-                    UpdateShadersRecurive(copy, obj);
+                InstantiateAvatar(item);
+            }
+        }
 
+        private void InstantiateAvatar(GameObject item)
+        {
+            if (item.layer == LayerMask.NameToLayer("Player"))
+            {
+                var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
+                GameObject.Instantiate(obj, ClonesParent.transform, true);
+            }
+            else if (item.layer == LayerMask.NameToLayer("PlayerLocal"))
+            {
+                var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
+                var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
+                foreach (var copycomp in copy.GetComponents<Component>())
+                {
+                    if (!(copycomp is Transform))
+                    {
+                        GameObject.Destroy(copycomp);
+                    }
                 }
+                UpdateLayerRecurive(copy);
+                UpdateShadersRecurive(copy, obj);
+
             }
         }
 
