@@ -5,7 +5,7 @@ using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.2", "Eric")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.3", "Eric van Fandenfart")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
