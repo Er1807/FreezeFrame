@@ -1,11 +1,12 @@
-﻿using FreezeFrame;
+﻿using ActionMenuApi.Api;
+using FreezeFrame;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.3", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.4", "Eric van Fandenfart")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
@@ -15,27 +16,28 @@ namespace FreezeFrame
     {
         public override void OnApplicationStart()
         {
+            VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
+                   "Freeze Frame Animation",
+                   delegate {
+                       MelonLogger.Msg("Freeze Frame Menu Opened");
+                       CustomSubMenu.AddButton("Freeze All", () => Create());
+                       CustomSubMenu.AddButton("Delete All", () => Delete());
+                       CustomSubMenu.AddButton("Freeze Self", () =>
+                       {
+                           var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
+                           MelonLogger.Msg($"Creating Freeze Frame for yourself");
+                           EnsureHolderCreated();
+                           InstantiateAvatar(player);
+                       });
+                   }
+               );
             VRCUtils.OnUiManagerInit += Init;
+
+            MelonLogger.Msg($"Actionmenu initialised");
         }
 
         private void Init()
         {
-            new SingleButton(GameObject.Find("UserInterface/QuickMenu/CameraMenu"),
-                            new Vector3(2, 3), "Create\r\nFreeze", delegate
-                            {
-                                Create();
-                            },
-                            "Create a new Freeze Frame of all avatars",
-                            "FreezeCreateBtn");
-
-            new SingleButton(GameObject.Find("UserInterface/QuickMenu/CameraMenu"),
-                             new Vector3(3, 3), "Delete\r\nFreeze", delegate
-                             {
-                                 Delete();
-                             },
-                             "Deletes all Freeze Frames",
-                             "FreezeDeleteBtn");
-
             new SingleButton(GameObject.Find("UserInterface/QuickMenu/UserInteractMenu"),
                             new Vector3(1, 3), "Create\r\nFreeze", delegate
                             {
@@ -45,17 +47,6 @@ namespace FreezeFrame
                                 InstantiateAvatar(player);
                             },
                             "Create a new Freeze Frame of avatar",
-                            "FreezeCreateSingleBtn");
-
-            new SingleButton(GameObject.Find("UserInterface/QuickMenu/CameraMenu"),
-                            new Vector3(4, 1), "Create self\r\nFreeze", delegate
-                            {
-                                var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
-                                MelonLogger.Msg($"Creating Freeze Frame for yourself");
-                                EnsureHolderCreated();
-                                InstantiateAvatar(player);
-                            },
-                            "Create a new Freeze Frame of yourself",
                             "FreezeCreateSingleBtn");
 
             MelonLogger.Msg("Buttons sucessfully created");
@@ -95,15 +86,16 @@ namespace FreezeFrame
 
         private void InstantiateAvatar(GameObject item)
         {
-            if (item.layer == LayerMask.NameToLayer("Player"))
+            Transform temp = item.transform.Find("ForwardDirection/Avatar");
+            if (temp == null) return;
+            var obj = temp.gameObject;
+            var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
+
+            UpdateLayerRecurive(copy);
+            UpdateShadersRecurive(copy, obj);
+
+            if (item.layer == LayerMask.NameToLayer("PlayerLocal"))
             {
-                var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
-                GameObject.Instantiate(obj, ClonesParent.transform, true);
-            }
-            else if (item.layer == LayerMask.NameToLayer("PlayerLocal"))
-            {
-                var obj = item.transform.Find("ForwardDirection/Avatar").gameObject;
-                var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
                 foreach (var copycomp in copy.GetComponents<Component>())
                 {
                     if (!(copycomp is Transform))
@@ -111,9 +103,6 @@ namespace FreezeFrame
                         GameObject.Destroy(copycomp);
                     }
                 }
-                UpdateLayerRecurive(copy);
-                UpdateShadersRecurive(copy, obj);
-
             }
         }
 
