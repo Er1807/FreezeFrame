@@ -2,7 +2,7 @@
 Create local Freeze Frames of Avatars in VRC
 
 
-Requires VRChatUtilityKit and ActionMenuApi
+Requires [VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit) and [ActionMenuApi](https://github.com/gompocp/ActionMenuApi)
 
 
 The actionmenu can be used to create a frezze of everyone in the lobby or only yourself, and all can be eleted again
