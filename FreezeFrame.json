@@ -1,0 +1,21 @@
+{
+  "_id": 251,
+  "name": "FreezeFrame",
+  "modversion": "1.0.4",
+  "vrchatversion": "1132",
+  "loaderversion": "v0.4.3 Open-Beta",
+  "modtype": "Mod",
+  "author": "Eric van Fandenfart",
+  "description": "Creates a Freeze Frame locally of all avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu",
+  "searchtags": [
+    "Camera", "Freeze"
+  ],
+  "requirements": [
+    "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
+    "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
+  ],
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.0.4/FreezeFrame.dll",
+  "sourcelink": "https://github.com/Er1807/FreezeFrame",
+  "changelog": "Now using ActionMenuApi?",
+  "embedcolor": "7F60CA"
+}
