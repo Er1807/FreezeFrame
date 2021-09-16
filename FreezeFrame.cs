@@ -1,6 +1,7 @@
 ﻿using ActionMenuApi.Api;
 using FreezeFrame;
 using MelonLoader;
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
@@ -14,6 +15,10 @@ namespace FreezeFrame
 
     public class FreezeFrameMod : MelonMod
     {
+        private GameObject ClonesParent = null;
+        private DateTime? DelayedSelf = null;
+        private DateTime? DelayedAll = null;
+
         public override void OnApplicationStart()
         {
             VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
@@ -21,19 +26,37 @@ namespace FreezeFrame
                    delegate {
                        MelonLogger.Msg("Freeze Frame Menu Opened");
                        CustomSubMenu.AddButton("Freeze All", () => Create());
+                       CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
                        CustomSubMenu.AddButton("Delete All", () => Delete());
-                       CustomSubMenu.AddButton("Freeze Self", () =>
-                       {
-                           var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
-                           MelonLogger.Msg($"Creating Freeze Frame for yourself");
-                           EnsureHolderCreated();
-                           InstantiateAvatar(player);
-                       });
+                       CustomSubMenu.AddButton("Freeze Self", () => CreateSelf());
+                       CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
                    }
                );
             VRCUtils.OnUiManagerInit += Init;
 
             MelonLogger.Msg($"Actionmenu initialised");
+        }
+
+        public override void OnUpdate()
+        {
+            if (DelayedSelf.HasValue && DelayedSelf < DateTime.Now)
+            {
+                DelayedSelf = null;
+                CreateSelf();
+            }
+            if (DelayedAll.HasValue && DelayedAll < DateTime.Now)
+            {
+                DelayedAll = null;
+                Create();
+            }
+        }
+
+        private void CreateSelf()
+        {
+            var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
+            MelonLogger.Msg($"Creating Freeze Frame for yourself");
+            EnsureHolderCreated();
+            InstantiateAvatar(player);
         }
 
         private void Init()
@@ -52,7 +75,6 @@ namespace FreezeFrame
             MelonLogger.Msg("Buttons sucessfully created");
         }
 
-        GameObject ClonesParent = null;
 
         public void Delete()
         {
