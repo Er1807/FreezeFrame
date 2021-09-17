@@ -6,7 +6,7 @@ Requires [VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRCha
 
 
 The actionmenu can be used to create a frezze of everyone in the lobby or only yourself, and all can be eleted again
-![image](https://user-images.githubusercontent.com/20169013/133577624-0a21b2d5-c288-4b88-a856-fb56a4a50387.png)
+![image](https://user-images.githubusercontent.com/20169013/133785941-e47c76fa-29da-4fbe-9398-80d9e0a4424a.png)
 
 
 To only create a frezze of a remoter avatar a button in the context menu can be used
