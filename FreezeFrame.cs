@@ -28,6 +28,7 @@ namespace FreezeFrame
                        CustomSubMenu.AddButton("Freeze All", () => Create());
                        CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
                        CustomSubMenu.AddButton("Delete All", () => Delete());
+                       CustomSubMenu.AddButton("Delete Last", () => DeleteLast());
                        CustomSubMenu.AddButton("Freeze Self", () => CreateSelf());
                        CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
                    }
@@ -83,6 +84,15 @@ namespace FreezeFrame
             {
                 GameObject.Destroy(ClonesParent);
                 ClonesParent = null;
+            }
+        }
+
+        public void DeleteLast()
+        {
+            MelonLogger.Msg("Deleting last Freeze Frame");
+            if (ClonesParent != null && ClonesParent.scene.IsValid() && ClonesParent.transform.childCount != 0)
+            {
+                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount-1).gameObject);
             }
         }
 

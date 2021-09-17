@@ -1,7 +1,7 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.0.4",
+  "modversion": "1.0.5",
   "vrchatversion": "1132",
   "loaderversion": "v0.4.3 Open-Beta",
   "modtype": "Mod",
@@ -14,8 +14,8 @@
     "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.0.4/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.0.5/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Now using ActionMenuApi and fixed a bug with remote avatars",
+  "changelog": "Now using ActionMenuApi and fixed a bug with remote avatars. Added a option to created delayed Freezes",
   "embedcolor": "7F60CA"
 }
