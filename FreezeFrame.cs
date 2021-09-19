@@ -1,13 +1,16 @@
 ﻿using ActionMenuApi.Api;
 using FreezeFrame;
+using HarmonyLib;
 using MelonLoader;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.6", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.0.7", "Eric van Fandenfart")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
@@ -15,12 +18,15 @@ namespace FreezeFrame
 
     public class FreezeFrameMod : MelonMod
     {
-        private GameObject ClonesParent = null;
+        private static GameObject ClonesParent = null;
         private DateTime? DelayedSelf = null;
         private DateTime? DelayedAll = null;
 
         public override void OnApplicationStart()
         {
+            MelonLogger.Msg("Patching AssetBundle unloading");
+            HarmonyInstance.Patch(typeof(AssetBundle).GetMethod("Unload"), prefix: new HarmonyMethod(typeof(FreezeFrameMod).GetMethod("PrefixUnload", BindingFlags.Static | BindingFlags.Public)));
+            
             VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
                    "Freeze Frame Animation",
                    delegate {
@@ -36,6 +42,17 @@ namespace FreezeFrame
             VRCUtils.OnUiManagerInit += Init;
 
             MelonLogger.Msg($"Actionmenu initialised");
+        }
+        public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
+        public static void PrefixUnload(AssetBundle __instance,ref bool unloadAllLoadedObjects)
+        {
+            if (ClonesParent == null || ClonesParent.transform.childCount == 0) return;
+
+            MelonLogger.Msg("Frezze frames is active. Preventing unloadAllLoadedObjects.");
+
+            unloadAllLoadedObjects = false;
+            StillLoaded.Add(__instance);
+
         }
 
         public override void OnUpdate()
@@ -84,6 +101,12 @@ namespace FreezeFrame
             {
                 GameObject.Destroy(ClonesParent);
                 ClonesParent = null;
+                MelonLogger.Msg("Cleanup after all Freezes are gone");
+                foreach (var item in StillLoaded)
+                {
+                    item.Unload(true);
+                }
+                StillLoaded.Clear();
             }
         }
 
@@ -93,6 +116,12 @@ namespace FreezeFrame
             if (ClonesParent != null && ClonesParent.scene.IsValid() && ClonesParent.transform.childCount != 0)
             {
                 GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount-1).gameObject);
+                if(ClonesParent.transform.childCount == 0)
+                {
+                    MelonLogger.Msg("Cleanup after all Freezes are gone");
+                    foreach (var item in StillLoaded)
+                        item.Unload(true);
+                }
             }
         }
 
@@ -130,7 +159,7 @@ namespace FreezeFrame
             {
                 foreach (var copycomp in copy.GetComponents<Component>())
                 {
-                    if (!(copycomp is Transform))
+                    if (copycomp != copy.transform)
                     {
                         GameObject.Destroy(copycomp);
                     }
