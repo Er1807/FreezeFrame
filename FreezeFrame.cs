@@ -3,6 +3,7 @@ using FreezeFrame;
 using HarmonyLib;
 using MelonLoader;
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -18,9 +19,12 @@ namespace FreezeFrame
 
     public class FreezeFrameMod : MelonMod
     {
-        private static GameObject ClonesParent = null;
+        private GameObject ClonesParent = null;
         private DateTime? DelayedSelf = null;
         private DateTime? DelayedAll = null;
+
+        private bool VRCWSLibaryPresent = false;
+        private static bool active = false;
 
         public override void OnApplicationStart()
         {
@@ -42,13 +46,20 @@ namespace FreezeFrame
             VRCUtils.OnUiManagerInit += Init;
 
             MelonLogger.Msg($"Actionmenu initialised");
+
+            if(MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
+            {
+                VRCWSLibaryPresent = true;
+                MelonLogger.Msg("Found VRCWSLibary. Initialising Client Functions");
+                VRCWSLibaryIntegration.Init(this);
+            }
+
         }
         public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
         public static void PrefixUnload(AssetBundle __instance,ref bool unloadAllLoadedObjects)
         {
-            if (ClonesParent == null || ClonesParent.transform.childCount == 0) return;
-
-            MelonLogger.Msg("Frezze frames is active. Preventing unloadAllLoadedObjects.");
+            if (!active) 
+                return;
 
             unloadAllLoadedObjects = false;
             StillLoaded.Add(__instance);
@@ -74,6 +85,8 @@ namespace FreezeFrame
             var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
             MelonLogger.Msg($"Creating Freeze Frame for yourself");
             EnsureHolderCreated();
+            if (VRCWSLibaryPresent)
+                VRCWSLibaryIntegration.CreateFreezeOf(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_2);
             InstantiateAvatar(player);
         }
 
@@ -85,6 +98,8 @@ namespace FreezeFrame
                                 var player = VRCUtils.ActivePlayerInQuickMenu.gameObject;
                                 MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
                                 EnsureHolderCreated();
+                                if (VRCWSLibaryPresent)
+                                    VRCWSLibaryIntegration.CreateFreezeOf(VRCUtils.ActivePlayerInQuickMenu.prop_String_0);
                                 InstantiateAvatar(player);
                             },
                             "Create a new Freeze Frame of avatar",
@@ -101,6 +116,7 @@ namespace FreezeFrame
             {
                 GameObject.Destroy(ClonesParent);
                 ClonesParent = null;
+                active = false;
                 MelonLogger.Msg("Cleanup after all Freezes are gone");
                 foreach (var item in StillLoaded)
                 {
@@ -118,6 +134,7 @@ namespace FreezeFrame
                 GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount-1).gameObject);
                 if(ClonesParent.transform.childCount == 0)
                 {
+                    active = false;
                     MelonLogger.Msg("Cleanup after all Freezes are gone");
                     foreach (var item in StillLoaded)
                         item.Unload(true);
@@ -127,6 +144,7 @@ namespace FreezeFrame
 
         public void EnsureHolderCreated()
         {
+            active = true;
             if (ClonesParent == null || !ClonesParent.scene.IsValid())
             {
                 ClonesParent = new GameObject("Avatar Clone Holder");
@@ -137,15 +155,18 @@ namespace FreezeFrame
         {
             MelonLogger.Msg("Creating Freeze Frame for all Avatars");
             EnsureHolderCreated();
-            var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+            if (VRCWSLibaryPresent)
+                VRCWSLibaryIntegration.CreateFreezeOf();
 
+            var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+            
             foreach (var item in rootObjects)
             {
                 InstantiateAvatar(item);
             }
         }
 
-        private void InstantiateAvatar(GameObject item)
+        public void InstantiateAvatar(GameObject item)
         {
             Transform temp = item.transform.Find("ForwardDirection/Avatar");
             if (temp == null) return;
