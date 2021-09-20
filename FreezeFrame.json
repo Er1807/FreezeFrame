@@ -1,12 +1,12 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.0.6",
+  "modversion": "1.1.1",
   "vrchatversion": "1132",
   "loaderversion": "v0.4.3 Open-Beta",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
-  "description": "Creates a Freeze Frame locally of all avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu",
+  "description": "Creates a Freeze Frame locally of all avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu\n\n With [VRCWS](https://github.com/Er1807/VRCWS) the event of taking a freeze is synchronized between all members in the lobby that also have VRCWS and FreezeFrame and are connected to the same VRCWS server",
   "searchtags": [
     "Camera", "Freeze"
   ],
@@ -14,8 +14,8 @@
     "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.0.6/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.1.1/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Now using ActionMenuApi and fixed a bug with remote avatars\n Added a option to created delayed Freezes\nAdded delete last option",
+  "changelog": "Fixed issue where avatars can disappear by cleanup loop. \nAdded optional [VRCWS](https://github.com/Er1807/VRCWS) dependency to allow Freeze frames to be taken synchronised",
   "embedcolor": "7F60CA"
 }
