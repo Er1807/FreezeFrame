@@ -11,8 +11,9 @@ using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.1.2", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.1.3", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
+[assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
@@ -50,12 +51,18 @@ namespace FreezeFrame
 
             if(MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
-                VRCWSLibaryPresent = true;
-                MelonLogger.Msg("Found VRCWSLibary. Initialising Client Functions");
-                VRCWSLibaryIntegration.Init(this);
+                LoadVRCWS();
             }
 
         }
+
+        public void LoadVRCWS()
+        {
+            VRCWSLibaryPresent = true;
+            MelonLogger.Msg("Found VRCWSLibary. Initialising Client Functions");
+            VRCWSLibaryIntegration.Init(this);
+        }
+
         public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
         public static void PrefixUnload(AssetBundle __instance,ref bool unloadAllLoadedObjects)
         {
@@ -87,8 +94,14 @@ namespace FreezeFrame
             MelonLogger.Msg($"Creating Freeze Frame for yourself");
             EnsureHolderCreated();
             if (VRCWSLibaryPresent)
-                VRCWSLibaryIntegration.CreateFreezeOf(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_2);
+                VRCWSCreateFreezeOfWrapper(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_2);
+                
             InstantiateAvatar(player);
+        }
+
+        public void VRCWSCreateFreezeOfWrapper(string attr = "all")
+        {
+            VRCWSLibaryIntegration.CreateFreezeOf(attr);
         }
 
         private void Init()
@@ -100,7 +113,7 @@ namespace FreezeFrame
                                 MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
                                 EnsureHolderCreated();
                                 if (VRCWSLibaryPresent)
-                                    VRCWSLibaryIntegration.CreateFreezeOf(VRCUtils.ActivePlayerInQuickMenu.prop_String_0);
+                                    VRCWSCreateFreezeOfWrapper(VRCUtils.ActivePlayerInQuickMenu.prop_String_0);
                                 InstantiateAvatar(player);
                             },
                             "Create a new Freeze Frame of avatar",
@@ -157,7 +170,7 @@ namespace FreezeFrame
             MelonLogger.Msg("Creating Freeze Frame for all Avatars");
             EnsureHolderCreated();
             if (VRCWSLibaryPresent)
-                VRCWSLibaryIntegration.CreateFreezeOf();
+                VRCWSCreateFreezeOfWrapper();
 
             var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
             

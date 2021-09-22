@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Utilities;
-using VRCWS;
+using VRCWSLibary;
 
 namespace FreezeFrame
 {
