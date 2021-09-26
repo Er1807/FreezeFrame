@@ -98,8 +98,5 @@
   <ItemGroup>
     <None Include="FreezeFrame.json" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="VRCWSLibary.dll" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
