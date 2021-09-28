@@ -16,5 +16,7 @@ To only create a frezze of a remoter avatar a button in the context menu can be 
 
 Result
 
-
 ![image](https://user-images.githubusercontent.com/20169013/133579280-e71542a7-4c35-42b9-86e1-38ecd11edad3.png)
+
+
+As an optional dependency [VRCWS](https://github.com/Er1807/VRCWS) can be used to synchronize freezes creation between everyone with these two mods. This requires that you are in the same world and have the other person trusted. For more details on this process look at the VRCWS repo.
