@@ -14,14 +14,16 @@ namespace FreezeFrame
     class VRCWSLibaryIntegration
     {
 
-        public static void Init(FreezeFrameMod freeze)
+        public static void Init(FreezeFrameMod freeze, MelonPreferences_Entry<bool> onlyTrustedP)
         {
             freezeMod = freeze;
+            onlyTrusted = onlyTrustedP;
             MelonCoroutines.Start(LoadClient());
         }
 
         private static Client client;
         private static FreezeFrameMod freezeMod;
+        private static MelonPreferences_Entry<bool> onlyTrusted;
         private static IEnumerator LoadClient()
         {
             while (!Client.ClientAvailable())
@@ -30,28 +32,44 @@ namespace FreezeFrame
 
             client = Client.GetClient();
 
-            client.RegisterEvent("FreezeFrameTaken", async (msg) => {
-                MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {msg.Content}");
-                await AsyncUtils.YieldToMainThread();
-                freezeMod.EnsureHolderCreated();
-                var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
-                if (msg.Content == "all")
+            onlyTrusted.OnValueChanged += (_, newValue) =>
+            {
+                client.RemoveEvent("FreezeFrameTaken");
+                client.RegisterEvent("FreezeFrameTaken", async (msg) =>
                 {
-                    foreach (var item in rootObjects)
-                    {
-                        freezeMod.InstantiateAvatar(item);
-                    }
-                }
-                else
-                {
-                    foreach (var item in rootObjects)
-                    {
-                        if(item.GetComponent<VRCPlayer>()?.prop_String_2 == msg.Content)
-                            freezeMod.InstantiateAvatar(item);
-                    }
-                }
-            });
+                    await EventCall(msg);
+                }, signatureRequired: newValue);
+            };
 
+
+            client.RegisterEvent("FreezeFrameTaken", async (msg) =>
+            {
+                await EventCall(msg);
+            }, signatureRequired: onlyTrusted.Value);
+
+        }
+
+        private static async Task EventCall(Message msg)
+        {
+            MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {msg.Content}");
+            await AsyncUtils.YieldToMainThread();
+            freezeMod.EnsureHolderCreated();
+            var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
+            if (msg.Content == "all")
+            {
+                foreach (var item in rootObjects)
+                {
+                    freezeMod.InstantiateAvatar(item);
+                }
+            }
+            else
+            {
+                foreach (var item in rootObjects)
+                {
+                    if (item.GetComponent<VRCPlayer>()?.prop_String_2 == msg.Content)
+                        freezeMod.InstantiateAvatar(item);
+                }
+            }
         }
 
         public static void CreateFreezeOf(string ofPlayer = "all")

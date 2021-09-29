@@ -49,18 +49,23 @@ namespace FreezeFrame
 
             MelonLogger.Msg($"Actionmenu initialised");
 
-            if(MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
+            var category = MelonPreferences.CreateCategory("FreezeFrame");
+            MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
+
+            if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
-                LoadVRCWS();
+                LoadVRCWS(onlyTrusted);
             }
+
+
 
         }
 
-        public void LoadVRCWS()
+        public void LoadVRCWS(MelonPreferences_Entry<bool> onlyTrusted)
         {
             VRCWSLibaryPresent = true;
             MelonLogger.Msg("Found VRCWSLibary. Initialising Client Functions");
-            VRCWSLibaryIntegration.Init(this);
+            VRCWSLibaryIntegration.Init(this, onlyTrusted);
         }
 
         public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
