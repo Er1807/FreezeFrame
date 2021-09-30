@@ -1,8 +1,8 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.1.4",
-  "vrchatversion": "1132",
+  "modversion": "1.1.5",
+  "vrchatversion": "1133",
   "loaderversion": "v0.4.3 Open-Beta",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
@@ -14,8 +14,8 @@
     "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.1.4/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.1.5/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Fixed issue where avatars can disappear by cleanup loop. \nAdded optional [VRCWS](https://github.com/Er1807/VRCWS) dependency to allow Freeze frames to be taken synchronised",
+  "changelog": "Made VRCWS trusted mode optional and disabled by default",
   "embedcolor": "7F60CA"
 }
