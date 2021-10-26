@@ -54,21 +54,13 @@ namespace FreezeFrame
             MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {msg.Content}");
             await AsyncUtils.YieldToMainThread();
             freezeMod.EnsureHolderCreated();
-            var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
             if (msg.Content == "all")
             {
-                foreach (var item in rootObjects)
-                {
-                    freezeMod.InstantiateAvatar(item);
-                }
+                freezeMod.InstantiateAll();
             }
             else
             {
-                foreach (var item in rootObjects)
-                {
-                    if (item.GetComponent<VRCPlayer>()?.prop_String_2 == msg.Content)
-                        freezeMod.InstantiateAvatar(item);
-                }
+                freezeMod.InstantiateByName(msg.Content);
             }
         }
 
