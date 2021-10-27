@@ -7,7 +7,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 
@@ -32,10 +31,11 @@ namespace FreezeFrame
         {
             MelonLogger.Msg("Patching AssetBundle unloading");
             HarmonyInstance.Patch(typeof(AssetBundle).GetMethod("Unload"), prefix: new HarmonyMethod(typeof(FreezeFrameMod).GetMethod("PrefixUnload", BindingFlags.Static | BindingFlags.Public)));
-            
+
             VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
                    "Freeze Frame Animation",
-                   delegate {
+                   delegate
+                   {
                        MelonLogger.Msg("Freeze Frame Menu Opened");
                        CustomSubMenu.AddButton("Freeze All", () => Create());
                        CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
@@ -56,9 +56,6 @@ namespace FreezeFrame
             {
                 LoadVRCWS(onlyTrusted);
             }
-
-
-
         }
 
         public void LoadVRCWS(MelonPreferences_Entry<bool> onlyTrusted)
@@ -69,14 +66,13 @@ namespace FreezeFrame
         }
 
         public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
-        public static void PrefixUnload(AssetBundle __instance,ref bool unloadAllLoadedObjects)
+        public static void PrefixUnload(AssetBundle __instance, ref bool unloadAllLoadedObjects)
         {
-            if (!active) 
+            if (!active)
                 return;
 
             unloadAllLoadedObjects = false;
             StillLoaded.Add(__instance);
-
         }
 
         public override void OnUpdate()
@@ -100,7 +96,7 @@ namespace FreezeFrame
             EnsureHolderCreated();
             if (VRCWSLibaryPresent)
                 VRCWSCreateFreezeOfWrapper(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_2);
-                
+
             InstantiateAvatar(player);
         }
 
@@ -127,7 +123,6 @@ namespace FreezeFrame
             MelonLogger.Msg("Buttons sucessfully created");
         }
 
-
         public void Delete()
         {
             MelonLogger.Msg("Deleting all Freeze Frames");
@@ -150,8 +145,8 @@ namespace FreezeFrame
             MelonLogger.Msg("Deleting last Freeze Frame");
             if (ClonesParent != null && ClonesParent.scene.IsValid() && ClonesParent.transform.childCount != 0)
             {
-                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount-1).gameObject);
-                if(ClonesParent.transform.childCount == 0)
+                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount - 1).gameObject);
+                if (ClonesParent.transform.childCount == 0)
                 {
                     active = false;
                     MelonLogger.Msg("Cleanup after all Freezes are gone");
@@ -177,71 +172,73 @@ namespace FreezeFrame
             if (VRCWSLibaryPresent)
                 VRCWSCreateFreezeOfWrapper();
 
-            var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
-            
-            foreach (var item in rootObjects)
-            {
-                InstantiateAvatar(item);
-            }
+            InstantiateAll();
         }
 
-        public void InstantiateAvatar(GameObject item)
+        public void InstantiateByName(string name)
         {
-            Transform temp = item.transform.Find("ForwardDirection/Avatar");
-            if (temp == null) return;
-            var obj = temp.gameObject;
-            var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
-
-            UpdateLayerRecurive(copy);
-            UpdateShadersRecurive(copy, obj);
-
-            if (item.layer == LayerMask.NameToLayer("PlayerLocal"))
+            foreach (var player in VRC.PlayerManager.Method_Public_Static_ArrayOf_Player_0())
             {
-                foreach (var copycomp in copy.GetComponents<Component>())
+                if (player.prop_VRCPlayer_0.prop_String_2 == name)
                 {
-                    if (copycomp != copy.transform)
-                    {
-                        GameObject.Destroy(copycomp);
-                    }
+                    InstantiateAvatar(player.gameObject);
+                    return;
                 }
             }
         }
 
-        public void UpdateLayerRecurive(GameObject obj)
+        public void InstantiateAll()
         {
-            obj.layer = LayerMask.NameToLayer("Player");
-            //Restore head. Hope no one changes the scale from 1,1,1
-            if (obj.transform.localScale == new Vector3(0.0001f, 0.0001f, 0.0001f))
-            {
-                obj.transform.localScale = new Vector3(1, 1, 1);
-            }
-
-            for (int i = 0; i < obj.transform.GetChildCount(); i++)
-            {
-                UpdateLayerRecurive(obj.transform.GetChild(i).gameObject);
-            }
-
+            foreach (var player in VRC.PlayerManager.Method_Public_Static_ArrayOf_Player_0())
+                InstantiateAvatar(player.gameObject);
         }
 
-        public void UpdateShadersRecurive(GameObject copy, GameObject original)
+        public void InstantiateAvatar(GameObject item)
         {
-            Renderer copyRenderer = copy.GetComponent<Renderer>();
-            Renderer orginalRenderer = original.GetComponent<Renderer>();
-            if (copyRenderer != null && orginalRenderer != null)
+            var layer = LayerMask.NameToLayer("Player");
+            // Use mirror clone for self
+            var isLocal = item.GetComponent<VRCPlayer>().prop_VRCPlayerApi_0.isLocal;
+            var source = item.transform.Find(isLocal ? "ForwardDirection/_AvatarMirrorClone" : "ForwardDirection/Avatar");
+            if (source == null)
+                return;
+
+            var avatar = new GameObject("Avatar Clone");
+            avatar.layer = layer;
+            avatar.transform.SetParent(ClonesParent.transform);
+
+            // Get all the SkinnedMeshRenderers that belong to this avatar
+            foreach (var renderer in item.GetComponentsInChildren<Renderer>())
             {
-                MaterialPropertyBlock p = new MaterialPropertyBlock();
+                // Bake all the SkinnedMeshRenderers that belong to this avatar
+                if (renderer.TryCast<SkinnedMeshRenderer>() is SkinnedMeshRenderer skinnedMeshRenderer)
+                {
+                    // Create a new GameObject to house our mesh
+                    var holder = new GameObject("Mesh Holder for " + skinnedMeshRenderer.name);
+                    holder.layer = layer;
+                    holder.transform.SetParent(avatar.transform, false);
 
-                orginalRenderer.GetPropertyBlock(p);
-                copyRenderer.SetPropertyBlock(p);
+                    // Fix mesh location
+                    holder.transform.position = skinnedMeshRenderer.transform.position;
+                    holder.transform.rotation = skinnedMeshRenderer.transform.rotation;
+
+                    // Bake the current pose
+                    var mesh = new Mesh();
+                    skinnedMeshRenderer.BakeMesh(mesh);
+
+                    // setup the rendering components;
+                    holder.AddComponent<MeshFilter>().mesh = mesh;
+                    var target = holder.AddComponent<MeshRenderer>();
+                    target.materials = skinnedMeshRenderer.materials;
+                    var propertyBlock = new MaterialPropertyBlock();
+                    skinnedMeshRenderer.GetPropertyBlock(propertyBlock);
+                    target.SetPropertyBlock(propertyBlock);
+                }
+                else
+                {
+                    var holder = GameObject.Instantiate(renderer.gameObject, avatar.transform, true);
+                    holder.layer = layer;
+                }
             }
-
-
-            for (int i = 0; i < copy.transform.GetChildCount(); i++)
-            {
-                UpdateShadersRecurive(copy.transform.GetChild(i).gameObject, original.transform.GetChild(i).gameObject);
-            }
-
         }
-
     }
 }
