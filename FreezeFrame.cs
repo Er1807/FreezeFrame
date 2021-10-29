@@ -1,4 +1,4 @@
-﻿using ActionMenuApi.Api;
+using ActionMenuApi.Api;
 using FreezeFrame;
 using HarmonyLib;
 using MelonLoader;
@@ -207,11 +207,8 @@ namespace FreezeFrame
             avatar.transform.SetParent(ClonesParent.transform);
 
             // Get all the SkinnedMeshRenderers that belong to this avatar
-            foreach (var renderer in item.GetComponentsInChildren<Renderer>())
+            foreach (var renderer in source.GetComponentsInChildren<Renderer>())
             {
-                if (renderer.gameObject.name == "SelectRegion") //ignore the selector
-                    continue;
-
                 // Bake all the SkinnedMeshRenderers that belong to this avatar
                 if (renderer.TryCast<SkinnedMeshRenderer>() is SkinnedMeshRenderer skinnedMeshRenderer)
                 {
