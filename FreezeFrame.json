@@ -1,8 +1,8 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.1.5",
-  "vrchatversion": "1133",
+  "modversion": "1.2.0",
+  "vrchatversion": "1149",
   "loaderversion": "v0.4.3 Open-Beta",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
@@ -14,8 +14,8 @@
     "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.1.5/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.2.0/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Made VRCWS trusted mode optional and disabled by default",
+  "changelog": "Baking meshes for frozen avatars. Improves performance. Thanks Behemoth. Added Support for 1149",
   "embedcolor": "7F60CA"
 }

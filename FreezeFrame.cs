@@ -9,8 +9,10 @@ using System.Reflection;
 using UnityEngine;
 using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
+using TMPro;
+using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.1.8", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.0", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -66,6 +68,7 @@ namespace FreezeFrame
         }
 
         public static List<AssetBundle> StillLoaded = new List<AssetBundle>();
+
         public static void PrefixUnload(AssetBundle __instance, ref bool unloadAllLoadedObjects)
         {
             if (!active)
@@ -107,18 +110,13 @@ namespace FreezeFrame
 
         private void Init()
         {
-            new SingleButton(GameObject.Find("UserInterface/QuickMenu/UserInteractMenu"),
-                            new Vector3(1, 3), "Create\r\nFreeze", delegate
-                            {
-                                var player = VRCUtils.ActivePlayerInQuickMenu.gameObject;
-                                MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
-                                EnsureHolderCreated();
-                                if (VRCWSLibaryPresent)
-                                    VRCWSCreateFreezeOfWrapper(VRCUtils.ActivePlayerInQuickMenu.prop_String_0);
-                                InstantiateAvatar(player);
-                            },
-                            "Create a new Freeze Frame of avatar",
-                            "FreezeCreateSingleBtn");
+            UiManager.AddButtonToExistingGroup(UiManager.QMStateController.transform.Find("Container/Window/QMParent/Menu_SelectedUser_Local/ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions").gameObject, new SingleButton(new Action(() => {
+                MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
+                EnsureHolderCreated();
+                if (VRCWSLibaryPresent)
+                    VRCWSCreateFreezeOfWrapper(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
+                InstantiateByName(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
+            }), null, "Create Freeze", "CreateFreeze"));
 
             MelonLogger.Msg("Buttons sucessfully created");
         }
@@ -177,7 +175,7 @@ namespace FreezeFrame
 
         public void InstantiateByName(string name)
         {
-            foreach (var player in VRC.PlayerManager.Method_Public_Static_ArrayOf_Player_0())
+            foreach (var player in VRC.PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
             {
                 if (player.prop_VRCPlayer_0.prop_String_2 == name)
                 {
@@ -189,7 +187,7 @@ namespace FreezeFrame
 
         public void InstantiateAll()
         {
-            foreach (var player in VRC.PlayerManager.Method_Public_Static_ArrayOf_Player_0())
+            foreach (var player in VRC.PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
                 InstantiateAvatar(player.gameObject);
         }
 
