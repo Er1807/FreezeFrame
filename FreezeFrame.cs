@@ -12,7 +12,7 @@ using VRChatUtilityKit.Utilities;
 using TMPro;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.0", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.1", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -117,7 +117,7 @@ namespace FreezeFrame
                     VRCWSCreateFreezeOfWrapper(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
                 InstantiateByName(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
             }), null, "Create Freeze", "CreateFreeze"));
-
+            
             MelonLogger.Msg("Buttons sucessfully created");
         }
 
