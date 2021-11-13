@@ -12,7 +12,7 @@ using VRChatUtilityKit.Utilities;
 using TMPro;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.1", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.2", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -98,7 +98,7 @@ namespace FreezeFrame
             MelonLogger.Msg($"Creating Freeze Frame for yourself");
             EnsureHolderCreated();
             if (VRCWSLibaryPresent)
-                VRCWSCreateFreezeOfWrapper(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_2);
+                VRCWSCreateFreezeOfWrapper(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_3);
 
             InstantiateAvatar(player);
         }
@@ -177,7 +177,7 @@ namespace FreezeFrame
         {
             foreach (var player in VRC.PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
             {
-                if (player.prop_VRCPlayer_0.prop_String_2 == name)
+                if (player.prop_VRCPlayer_0.prop_String_3 == name)
                 {
                     InstantiateAvatar(player.gameObject);
                     return;

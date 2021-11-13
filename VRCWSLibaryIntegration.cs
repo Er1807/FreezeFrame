@@ -72,7 +72,7 @@ namespace FreezeFrame
                 var player = root.GetComponent<VRCPlayer>();
                 if (player != null && player != VRCPlayer.field_Internal_Static_VRCPlayer_0)
                 {
-                    client.Send(new Message() { Method = "FreezeFrameTaken", Target = player.prop_String_2, Content = ofPlayer });
+                    client.Send(new Message() { Method = "FreezeFrameTaken", Target = player.prop_String_3, Content = ofPlayer });
                 }
             }
         }
