@@ -12,7 +12,7 @@ using VRChatUtilityKit.Utilities;
 using TMPro;
 using UnityEngine.UI;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.2", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.3", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -235,6 +235,24 @@ namespace FreezeFrame
                 {
                     var holder = GameObject.Instantiate(renderer.gameObject, avatar.transform, true);
                     holder.layer = layer;
+                }
+            }
+            foreach (var lightsource in source.GetComponentsInChildren<Light>())
+            {
+                if (lightsource.isActiveAndEnabled)
+                {
+                    var holder = new GameObject("Wholesome Light Holder");
+                    holder.layer = layer;
+                    holder.transform.SetParent(avatar.transform, false);
+                    Light copy = holder.AddComponent<Light>();
+                    copy.intensity = lightsource.intensity;
+                    copy.range = lightsource.range;
+                    copy.shape = lightsource.shape;
+                    copy.attenuate = lightsource.attenuate;
+                    copy.color = lightsource.color;
+                    copy.colorTemperature = lightsource.colorTemperature;
+                    holder.transform.position = lightsource.transform.position;
+                    holder.transform.rotation = lightsource.transform.rotation;
                 }
             }
         }
