@@ -11,14 +11,22 @@ using VRChatUtilityKit.Ui;
 using VRChatUtilityKit.Utilities;
 using TMPro;
 using UnityEngine.UI;
+using System.ComponentModel;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.3", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.4", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
 
 namespace FreezeFrame
 {
+    public enum FreezeType
+    {
+        [DescriptionAttribute("Full Freeze")]
+        FullFreeze,
+        [DescriptionAttribute("Performance Freeze")]
+        PerformanceFreeze
+    }
 
     public class FreezeFrameMod : MelonMod
     {
@@ -28,7 +36,7 @@ namespace FreezeFrame
 
         private bool VRCWSLibaryPresent = false;
         private static bool active = false;
-
+        MelonPreferences_Entry<FreezeType> freezeType;
         public override void OnApplicationStart()
         {
             MelonLogger.Msg("Patching AssetBundle unloading");
@@ -53,6 +61,7 @@ namespace FreezeFrame
 
             var category = MelonPreferences.CreateCategory("FreezeFrame");
             MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
+            freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description:"Full Freeze is more accurate and copys everything but is less performant");
 
             if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
@@ -193,15 +202,80 @@ namespace FreezeFrame
 
         public void InstantiateAvatar(GameObject item)
         {
-            var layer = LayerMask.NameToLayer("Player");
-            // Use mirror clone for self
-            var isLocal = item.GetComponent<VRCPlayer>().prop_VRCPlayerApi_0.isLocal;
-            var source = item.transform.Find(isLocal ? "ForwardDirection/_AvatarMirrorClone" : "ForwardDirection/Avatar");
-            if (source == null)
+            if (item == null)
                 return;
+            // Use mirror clone for self
+            
+            if (freezeType.Value == FreezeType.FullFreeze)
+                FullCopy(item);
+            else
+                PerformantCopy(item);
+        }
+
+        public void FullCopy(GameObject player)
+        {
+            Transform temp = player.transform.Find("ForwardDirection/Avatar");
+            var obj = temp.gameObject;
+            var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
+            copy.name = "Avatar Clone";
+            UpdateLayerRecurive(copy);
+            UpdateShadersRecurive(copy, obj);
+
+            if (obj.layer == LayerMask.NameToLayer("PlayerLocal"))
+            {
+                foreach (var copycomp in copy.GetComponents<UnityEngine.Component>())
+                {
+                    if (copycomp != copy.transform)
+                    {
+                        GameObject.Destroy(copycomp);
+                    }
+                }
+            }
+        }
+
+        public void UpdateLayerRecurive(GameObject obj)
+        {
+            obj.layer = LayerMask.NameToLayer("Player");
+            //Restore head. Hope no one changes the scale from 1,1,1
+            if (obj.transform.localScale == new Vector3(0.0001f, 0.0001f, 0.0001f))
+            {
+                obj.transform.localScale = new Vector3(1, 1, 1);
+            }
+
+            for (int i = 0; i < obj.transform.GetChildCount(); i++)
+            {
+                UpdateLayerRecurive(obj.transform.GetChild(i).gameObject);
+            }
+
+        }
+
+        public void UpdateShadersRecurive(GameObject copy, GameObject original)
+        {
+            Renderer copyRenderer = copy.GetComponent<Renderer>();
+            Renderer orginalRenderer = original.GetComponent<Renderer>();
+            if (copyRenderer != null && orginalRenderer != null)
+            {
+                MaterialPropertyBlock p = new MaterialPropertyBlock();
+
+                orginalRenderer.GetPropertyBlock(p);
+                copyRenderer.SetPropertyBlock(p);
+            }
+
+
+            for (int i = 0; i < copy.transform.GetChildCount(); i++)
+            {
+                UpdateShadersRecurive(copy.transform.GetChild(i).gameObject, original.transform.GetChild(i).gameObject);
+            }
+
+        }
+
+        public void PerformantCopy(GameObject player)
+        {
+            var isLocal = player.GetComponent<VRCPlayer>().prop_VRCPlayerApi_0.isLocal;
+            var source = player.transform.Find(isLocal ? "ForwardDirection/_AvatarMirrorClone" : "ForwardDirection/Avatar");
 
             var avatar = new GameObject("Avatar Clone");
-            avatar.layer = layer;
+            avatar.layer = LayerMask.NameToLayer("Player");
             avatar.transform.SetParent(ClonesParent.transform);
 
             // Get all the SkinnedMeshRenderers that belong to this avatar
@@ -212,7 +286,7 @@ namespace FreezeFrame
                 {
                     // Create a new GameObject to house our mesh
                     var holder = new GameObject("Mesh Holder for " + skinnedMeshRenderer.name);
-                    holder.layer = layer;
+                    holder.layer = LayerMask.NameToLayer("Player");
                     holder.transform.SetParent(avatar.transform, false);
 
                     // Fix mesh location
@@ -234,7 +308,7 @@ namespace FreezeFrame
                 else
                 {
                     var holder = GameObject.Instantiate(renderer.gameObject, avatar.transform, true);
-                    holder.layer = layer;
+                    holder.layer = LayerMask.NameToLayer("Player");
                 }
             }
             foreach (var lightsource in source.GetComponentsInChildren<Light>())
@@ -242,7 +316,7 @@ namespace FreezeFrame
                 if (lightsource.isActiveAndEnabled)
                 {
                     var holder = new GameObject("Wholesome Light Holder");
-                    holder.layer = layer;
+                    holder.layer = LayerMask.NameToLayer("Player");
                     holder.transform.SetParent(avatar.transform, false);
                     Light copy = holder.AddComponent<Light>();
                     copy.intensity = lightsource.intensity;
