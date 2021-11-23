@@ -7,14 +7,17 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
-using VRChatUtilityKit.Ui;
-using VRChatUtilityKit.Utilities;
-using TMPro;
-using UnityEngine.UI;
 using System.ComponentModel;
+using VRC.UI.Elements.Menus;
+using System.Collections;
+using VRC.UI.Elements;
+using VRC.DataModel.Core;
+using UnityEngine.UI;
+using TMPro;
+using System.Threading;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.4", "Eric van Fandenfart")]
-[assembly: MelonAdditionalDependencies("VRChatUtilityKit", "ActionMenuApi")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.5", "Eric van Fandenfart")]
+[assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
 
@@ -55,18 +58,29 @@ namespace FreezeFrame
                        CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
                    }
                );
-            VRCUtils.OnUiManagerInit += Init;
 
             MelonLogger.Msg($"Actionmenu initialised");
 
             var category = MelonPreferences.CreateCategory("FreezeFrame");
             MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
-            freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description:"Full Freeze is more accurate and copys everything but is less performant");
+            freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description: "Full Freeze is more accurate and copys everything but is less performant");
 
             if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
                 LoadVRCWS(onlyTrusted);
             }
+
+            MelonCoroutines.Start(WaitForUIInit());
+        }
+
+        private IEnumerator WaitForUIInit()
+        {
+            while (VRCUiManager.prop_VRCUiManager_0 == null)
+                yield return null;
+            while (GameObject.Find("UserInterface").transform.Find("Canvas_QuickMenu(Clone)/Container/Window/QMParent") == null)
+                yield return null;
+
+            LoadUI();
         }
 
         public void LoadVRCWS(MelonPreferences_Entry<bool> onlyTrusted)
@@ -89,6 +103,9 @@ namespace FreezeFrame
 
         public override void OnUpdate()
         {
+            if (VRCWSLibaryIntegration.AsyncUtils._toMainThreadQueue.TryDequeue(out Action result))
+                result.Invoke();
+
             if (DelayedSelf.HasValue && DelayedSelf < DateTime.Now)
             {
                 DelayedSelf = null;
@@ -117,16 +134,28 @@ namespace FreezeFrame
             VRCWSLibaryIntegration.CreateFreezeOf(attr);
         }
 
-        private void Init()
+        private MenuStateController menuStateController;
+
+        private void LoadUI()
         {
-            UiManager.AddButtonToExistingGroup(UiManager.QMStateController.transform.Find("Container/Window/QMParent/Menu_SelectedUser_Local/ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions").gameObject, new SingleButton(new Action(() => {
+            menuStateController = GameObject.Find("UserInterface").transform.Find("Canvas_QuickMenu(Clone)").GetComponent<MenuStateController>();
+            //based on VRCUKs code
+            var camera = menuStateController.transform.Find("Container/Window/QMParent/Menu_Camera/Scrollrect/Viewport/VerticalLayoutGroup/Buttons/Button_Screenshot");
+            var useractions = menuStateController.transform.Find("Container/Window/QMParent/Menu_SelectedUser_Local/ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions");
+            var createFreezeButton = GameObject.Instantiate(camera, useractions);
+            BindingExtensions.Method_Public_Static_ButtonBindingHelper_Button_Action_0(createFreezeButton.GetComponent<Button>(), new Action(() =>
+            {
                 MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
                 EnsureHolderCreated();
+                string userid = menuStateController.GetComponentInChildren<SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0;
                 if (VRCWSLibaryPresent)
-                    VRCWSCreateFreezeOfWrapper(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
-                InstantiateByName(VRCUtils.ActiveUserInUserInfoMenu.ToIUser().prop_String_0);
-            }), null, "Create Freeze", "CreateFreeze"));
-            
+                    VRCWSCreateFreezeOfWrapper(userid);
+                InstantiateByName(userid);
+            }));
+            createFreezeButton.GetComponentInChildren<TextMeshProUGUI>().text = "Create Freeze";
+
+
+
             MelonLogger.Msg("Buttons sucessfully created");
         }
 
@@ -186,13 +215,14 @@ namespace FreezeFrame
         {
             foreach (var player in VRC.PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
             {
-                if (player.prop_VRCPlayer_0.prop_String_3 == name)
+                if (player.prop_String_0 == name)
                 {
                     InstantiateAvatar(player.gameObject);
                     return;
                 }
             }
         }
+
 
         public void InstantiateAll()
         {
@@ -204,12 +234,13 @@ namespace FreezeFrame
         {
             if (item == null)
                 return;
-            // Use mirror clone for self
-            
+
             if (freezeType.Value == FreezeType.FullFreeze)
                 FullCopy(item);
             else
                 PerformantCopy(item);
+            
+            
         }
 
         public void FullCopy(GameObject player)
@@ -284,6 +315,7 @@ namespace FreezeFrame
                 // Bake all the SkinnedMeshRenderers that belong to this avatar
                 if (renderer.TryCast<SkinnedMeshRenderer>() is SkinnedMeshRenderer skinnedMeshRenderer)
                 {
+                    MelonLogger.Msg(renderer.gameObject.name);
                     // Create a new GameObject to house our mesh
                     var holder = new GameObject("Mesh Holder for " + skinnedMeshRenderer.name);
                     holder.layer = LayerMask.NameToLayer("Player");
