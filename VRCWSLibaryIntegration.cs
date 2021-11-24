@@ -34,21 +34,21 @@ namespace FreezeFrame
             onlyTrusted.OnValueChanged += (_, newValue) =>
             {
                 client.RemoveEvent("FreezeFrameTaken");
-                client.RegisterEvent("FreezeFrameTaken", async (msg) =>
+                client.RegisterEvent("FreezeFrameTaken", (msg) =>
                 {
-                    await EventCall(msg);
+                    EventCall(msg);
                 }, signatureRequired: newValue);
             };
 
 
-            client.RegisterEvent("FreezeFrameTaken", async (msg) =>
+            client.RegisterEvent("FreezeFrameTaken", (msg) =>
             {
-                await EventCall(msg);
+                EventCall(msg);
             }, signatureRequired: onlyTrusted.Value);
 
         }
 
-        private static async Task EventCall(Message msg)
+        private static void EventCall(Message msg)
         {
             
             MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {msg.Content}");

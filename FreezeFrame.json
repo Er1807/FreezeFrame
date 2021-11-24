@@ -1,7 +1,7 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.2.4",
+  "modversion": "1.2.5",
   "vrchatversion": "1149",
   "loaderversion": "v0.4.3 Open-Beta",
   "modtype": "Mod",
@@ -11,11 +11,10 @@
     "Camera", "Freeze"
   ],
   "requirements": [
-    "[VRChatUtilityKit](https://github.com/loukylor/VRC-Mods/tree/main/VRChatUtilityKit)",
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.2.4/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.2.5/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Fix issue with VRCWS and made mod more horny again.\nAdded full freeze as an option back under UIX settings",
+  "changelog": "Fixed bugs with VRCWS",
   "embedcolor": "7F60CA"
 }
