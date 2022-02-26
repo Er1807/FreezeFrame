@@ -16,7 +16,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Threading;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.5", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.6", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -143,7 +143,8 @@ namespace FreezeFrame
             var camera = menuStateController.transform.Find("Container/Window/QMParent/Menu_Camera/Scrollrect/Viewport/VerticalLayoutGroup/Buttons/Button_Screenshot");
             var useractions = menuStateController.transform.Find("Container/Window/QMParent/Menu_SelectedUser_Local/ScrollRect/Viewport/VerticalLayoutGroup/Buttons_UserActions");
             var createFreezeButton = GameObject.Instantiate(camera, useractions);
-            BindingExtensions.Method_Public_Static_ButtonBindingHelper_Button_Action_0(createFreezeButton.GetComponent<Button>(), new Action(() =>
+            createFreezeButton.GetComponent<Button>().onClick.RemoveAllListeners();
+            createFreezeButton.GetComponent<Button>().onClick.AddListener(new Action(() =>
             {
                 MelonLogger.Msg($"Creating Freeze Frame for selected avatar");
                 EnsureHolderCreated();
