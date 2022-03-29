@@ -15,6 +15,7 @@ using VRC.DataModel.Core;
 using UnityEngine.UI;
 using TMPro;
 using System.Threading;
+using VRC;
 
 [assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.6", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
@@ -25,25 +26,31 @@ namespace FreezeFrame
 {
     public enum FreezeType
     {
-        [DescriptionAttribute("Full Freeze")]
+        [Description("Full Freeze")]
         FullFreeze,
-        [DescriptionAttribute("Performance Freeze")]
+        [Description("Performance Freeze")]
         PerformanceFreeze
     }
 
     public class FreezeFrameMod : MelonMod
     {
-        private GameObject ClonesParent = null;
+        public GameObject ClonesParent = null;
         private DateTime? DelayedSelf = null;
         private DateTime? DelayedAll = null;
 
         private bool VRCWSLibaryPresent = false;
         private static bool active = false;
         MelonPreferences_Entry<FreezeType> freezeType;
+
+
+        
+
         public override void OnApplicationStart()
         {
             MelonLogger.Msg("Patching AssetBundle unloading");
             HarmonyInstance.Patch(typeof(AssetBundle).GetMethod("Unload"), prefix: new HarmonyMethod(typeof(FreezeFrameMod).GetMethod("PrefixUnload", BindingFlags.Static | BindingFlags.Public)));
+
+            animationModule = new AnimationModule(this);
 
             VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
                    "Freeze Frame Animation",
@@ -56,6 +63,8 @@ namespace FreezeFrame
                        CustomSubMenu.AddButton("Delete Last", () => DeleteLast());
                        CustomSubMenu.AddButton("Freeze Self", () => CreateSelf());
                        CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
+                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) => animationModule.Recording = state);
+                       CustomSubMenu.AddButton("Resync Animations", () => Resync());
                    }
                );
 
@@ -71,6 +80,15 @@ namespace FreezeFrame
             }
 
             MelonCoroutines.Start(WaitForUIInit());
+        }
+
+        public void Resync()
+        {
+            if (ClonesParent != null && ClonesParent.scene.IsValid())
+                foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
+                {
+                    item.Stop();
+                }
         }
 
         private IEnumerator WaitForUIInit()
@@ -116,6 +134,18 @@ namespace FreezeFrame
                 DelayedAll = null;
                 Create();
             }
+
+            if (animationModule.Recording)
+            {
+                animationModule.Record(Player.prop_Player_0.gameObject.transform.Find("ForwardDirection/_AvatarMirrorClone"));
+            }
+            if(ClonesParent != null && ClonesParent.scene.IsValid())
+                foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
+                {
+                    if (!item.IsPlaying("FreezeAnimation"))
+                        item.Play("FreezeAnimation");
+                }
+
         }
 
         private void CreateSelf()
@@ -135,6 +165,7 @@ namespace FreezeFrame
         }
 
         private MenuStateController menuStateController;
+        private AnimationModule animationModule;
 
         private void LoadUI()
         {
@@ -244,7 +275,16 @@ namespace FreezeFrame
             
         }
 
-        public void FullCopy(GameObject player)
+        public void FullCopyWithAnimations(GameObject player, AnimationClip animationClip)
+        {
+            EnsureHolderCreated();
+            var copy = FullCopy(player);
+            var animator = copy.AddComponent<Animation>();
+            animator.AddClip(animationClip, animationClip.name);
+            animator.Play(animationClip.name);
+        }
+
+        public GameObject FullCopy(GameObject player)
         {
             Transform temp = player.transform.Find("ForwardDirection/Avatar");
             var obj = temp.gameObject;
@@ -263,6 +303,7 @@ namespace FreezeFrame
                     }
                 }
             }
+            return copy;
         }
 
         public void UpdateLayerRecurive(GameObject obj)
