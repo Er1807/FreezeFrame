@@ -17,7 +17,7 @@ using TMPro;
 using System.Threading;
 using VRC;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.2.6", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.0", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
