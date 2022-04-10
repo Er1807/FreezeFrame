@@ -1,4 +1,5 @@
 ﻿using MelonLoader;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -10,8 +11,19 @@ using VRCWSLibary;
 
 namespace FreezeFrame
 {
+    public enum FreezeAction
+    {
+        Freeze, StartAnim, StopAnim
+    }
+
     class VRCWSLibaryIntegration
     {
+        
+        public class Datamodel
+        {
+            public string Target { get; set; }
+            public FreezeAction Action { get; set; }
+        }
 
         public static void Init(FreezeFrameMod freeze, MelonPreferences_Entry<bool> onlyTrustedP)
         {
@@ -50,23 +62,45 @@ namespace FreezeFrame
 
         private static void EventCall(Message msg)
         {
-            
-            MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {msg.Content}");
+            var data = msg.GetContentAs<Datamodel>();
+            if (data == null)
+                return;
+            MelonLogger.Msg($"Freeze Frame was taken by {msg.Target} for user {data.Target} with mode {data.Action}");
             AsyncUtils.ToMain(() => {
                 freezeMod.EnsureHolderCreated();
-                if (msg.Content == "all")
+                if (data.Action == FreezeAction.Freeze)
                 {
-                    freezeMod.InstantiateAll();
+                    if (data.Target == "all")
+                    {
+                        freezeMod.InstantiateAll();
+                    }
+                    else
+                    {
+                        freezeMod.InstantiateByID(data.Target);
+                    }
                 }
-                else
+                else if (data.Action == FreezeAction.StartAnim)
                 {
-                    freezeMod.InstantiateByName(msg.Content);
+                    foreach (var player in PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
+                    {
+                        if (player.field_Private_APIUser_0.id == data.Target)
+                        {
+                            freezeMod.LoggerInstance.Msg("Found player to record");
+                            freezeMod.animationModule.StartRecording(player, true);
+                            break;
+                        }
+                    }
                 }
+                else if (data.Action == FreezeAction.StopAnim)
+                {
+                    freezeMod.animationModule.StopRecording(true);
+                }
+
             });
             
         }
 
-        public static void CreateFreezeOf(string ofPlayer = "all")
+        public static void CreateFreezeOf(FreezeAction action, string ofPlayer = "all")
         {
             var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();
             foreach (var root in rootObjects)
@@ -74,7 +108,10 @@ namespace FreezeFrame
                 var player = root.GetComponent<Player>();
                 if (player != null && player != Player.prop_Player_0)
                 {
-                    client.Send(new Message() { Method = "FreezeFrameTaken", Target = player.prop_String_0, Content = ofPlayer });
+                    client.Send(new Message() { 
+                        Method = "FreezeFrameTaken", 
+                        Target = player.field_Private_APIUser_0.id, 
+                        Content = JsonConvert.SerializeObject(new Datamodel() { Action = action, Target = ofPlayer }) });
                 }
             }
         }

@@ -17,7 +17,7 @@ using TMPro;
 using System.Threading;
 using VRC;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.0", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.1", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -38,12 +38,15 @@ namespace FreezeFrame
         private DateTime? DelayedSelf = null;
         private DateTime? DelayedAll = null;
 
-        private bool VRCWSLibaryPresent = false;
+        public bool VRCWSLibaryPresent = false;
         private static bool active = false;
-        MelonPreferences_Entry<FreezeType> freezeType;
+        public MelonPreferences_Entry<FreezeType> freezeType;
+        public MelonPreferences_Entry<bool> allowRemoteRecording;
+        public MelonPreferences_Entry<bool> recordBlendshapes;
+        public AnimationModule animationModule;
 
 
-        
+
 
         public override void OnApplicationStart()
         {
@@ -63,7 +66,10 @@ namespace FreezeFrame
                        CustomSubMenu.AddButton("Delete Last", () => DeleteLast());
                        CustomSubMenu.AddButton("Freeze Self", () => CreateSelf());
                        CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
-                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) => animationModule.Recording = state);
+                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) => {
+                           if (state) animationModule.StartRecording(Player.prop_Player_0);
+                           else animationModule.StopRecording(); 
+                       });
                        CustomSubMenu.AddButton("Resync Animations", () => Resync());
                    }
                );
@@ -73,9 +79,12 @@ namespace FreezeFrame
             var category = MelonPreferences.CreateCategory("FreezeFrame");
             MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
             freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description: "Full Freeze is more accurate and copys everything but is less performant");
+            recordBlendshapes = category.CreateEntry("recordBlendshapes", true, display_name: "Record Blendshapes", description: "Blendshape Recording can quite limit the performance you can disable it here");
 
             if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
+                allowRemoteRecording = category.CreateEntry("allowRemoteRecording", true, display_name: "Allow Remote Recording (VRCWS)", description: "Since Recordings can quite limit the performance you can disable it here");
+
                 LoadVRCWS(onlyTrusted);
             }
 
@@ -118,7 +127,6 @@ namespace FreezeFrame
             unloadAllLoadedObjects = false;
             StillLoaded.Add(__instance);
         }
-
         public override void OnUpdate()
         {
             if (VRCWSLibaryIntegration.AsyncUtils._toMainThreadQueue.TryDequeue(out Action result))
@@ -135,11 +143,13 @@ namespace FreezeFrame
                 Create();
             }
 
-            if (animationModule.Recording)
+            if (animationModule.Recording /* && !animationModule.RemoteRecording*/)
             {
-                animationModule.Record(Player.prop_Player_0.gameObject.transform.Find("ForwardDirection/_AvatarMirrorClone"));
+                animationModule.Record();
+
+                AnimationModule.CurrentTime += Time.deltaTime;
             }
-            if(ClonesParent != null && ClonesParent.scene.IsValid())
+            if (ClonesParent != null && ClonesParent.scene.IsValid())
                 foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
                 {
                     if (!item.IsPlaying("FreezeAnimation"))
@@ -147,6 +157,15 @@ namespace FreezeFrame
                 }
 
         }
+        /*public override void OnLateUpdate()
+        {
+            if (animationModule.Recording && animationModule.RemoteRecording)
+            {
+                //animationModule.Record();
+
+                //AnimationModule.CurrentTime += Time.deltaTime;
+            }
+        }*/
 
         private void CreateSelf()
         {
@@ -154,18 +173,17 @@ namespace FreezeFrame
             MelonLogger.Msg($"Creating Freeze Frame for yourself");
             EnsureHolderCreated();
             if (VRCWSLibaryPresent)
-                VRCWSCreateFreezeOfWrapper(VRCPlayer.field_Internal_Static_VRCPlayer_0.prop_String_3);
+                VRCWSCreateFreezeOfWrapper(Player.prop_Player_0.field_Private_APIUser_0.id);
 
             InstantiateAvatar(player);
         }
 
         public void VRCWSCreateFreezeOfWrapper(string attr = "all")
         {
-            VRCWSLibaryIntegration.CreateFreezeOf(attr);
+            VRCWSLibaryIntegration.CreateFreezeOf(FreezeAction.Freeze, attr);
         }
 
         private MenuStateController menuStateController;
-        private AnimationModule animationModule;
 
         private void LoadUI()
         {
@@ -182,7 +200,7 @@ namespace FreezeFrame
                 string userid = menuStateController.GetComponentInChildren<SelectedUserMenuQM>().field_Private_IUser_0.prop_String_0;
                 if (VRCWSLibaryPresent)
                     VRCWSCreateFreezeOfWrapper(userid);
-                InstantiateByName(userid);
+                InstantiateByID(userid);
             }));
             createFreezeButton.GetComponentInChildren<TextMeshProUGUI>().text = "Create Freeze";
 
@@ -243,11 +261,11 @@ namespace FreezeFrame
             InstantiateAll();
         }
 
-        public void InstantiateByName(string name)
+        public void InstantiateByID(string id)
         {
-            foreach (var player in VRC.PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
+            foreach (var player in PlayerManager.field_Private_Static_PlayerManager_0.field_Private_List_1_Player_0)
             {
-                if (player.prop_String_0 == name)
+                if (player.field_Private_APIUser_0.id == id)
                 {
                     InstantiateAvatar(player.gameObject);
                     return;

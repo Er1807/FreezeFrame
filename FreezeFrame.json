@@ -1,9 +1,9 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.2.6",
+  "modversion": "1.3.0",
   "vrchatversion": "1169",
-  "loaderversion": "v0.5.3",
+  "loaderversion": "v0.5.4",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
   "description": "Creates a Freeze Frame locally of all avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu\n\n With [VRCWS](https://github.com/Er1807/VRCWS) the event of taking a freeze is synchronized between all members in the lobby that also have VRCWS and FreezeFrame and are connected to the same VRCWS server",
@@ -13,8 +13,8 @@
   "requirements": [
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.2.6/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.3.0/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Fixes for 1169",
+  "changelog": "Added possibility to record animations with local freezes",
   "embedcolor": "7F60CA"
 }
