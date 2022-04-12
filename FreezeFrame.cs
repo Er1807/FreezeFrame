@@ -16,8 +16,9 @@ using UnityEngine.UI;
 using TMPro;
 using System.Threading;
 using VRC;
+using VRC.SDKBase;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.1", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.2", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -45,7 +46,7 @@ namespace FreezeFrame
         public MelonPreferences_Entry<bool> recordBlendshapes;
         public AnimationModule animationModule;
 
-
+        private bool deleteMode;
 
 
         public override void OnApplicationStart()
@@ -60,20 +61,24 @@ namespace FreezeFrame
                    delegate
                    {
                        MelonLogger.Msg("Freeze Frame Menu Opened");
-                       CustomSubMenu.AddButton("Freeze All", () => Create());
-                       CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
-                       CustomSubMenu.AddButton("Delete All", () => Delete());
-                       CustomSubMenu.AddButton("Delete Last", () => DeleteLast());
-                       CustomSubMenu.AddButton("Freeze Self", () => CreateSelf());
-                       CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
+                       CustomSubMenu.AddButton("Delete Last", DeleteLast);
+                       CustomSubMenu.AddButton("Delete First",() => Delete(0));
+                       CustomSubMenu.AddButton("Freeze Self", CreateSelf);
                        CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) => {
                            if (state) animationModule.StartRecording(Player.prop_Player_0);
                            else animationModule.StopRecording(); 
                        });
-                       CustomSubMenu.AddButton("Resync Animations", () => Resync());
+                       CustomSubMenu.AddButton("Resync Animations", Resync);
+                       CustomSubMenu.AddSubMenu("Advanced", delegate
+                       {
+                           CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
+                           CustomSubMenu.AddButton("Delete All", Delete);
+                           CustomSubMenu.AddButton("Freeze All", Create);
+                           CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
+                           CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode); ;
+                       });
                    }
                );
-
             MelonLogger.Msg($"Actionmenu initialised");
 
             var category = MelonPreferences.CreateCategory("FreezeFrame");
@@ -89,6 +94,33 @@ namespace FreezeFrame
             }
 
             MelonCoroutines.Start(WaitForUIInit());
+        }
+
+        private void SwitchDeleteMode(bool state)
+        {
+            deleteMode = state;
+            EnsureHolderCreated();
+            if (deleteMode)
+            {
+                for (int i = 0; i < ClonesParent.transform.childCount; i++)
+                {
+                    var collidor = ClonesParent.transform.GetChild(i).gameObject.AddComponent<BoxCollider>();
+                    collidor.center = new Vector3(0, 0.7f, 0);
+                    collidor.size = new Vector3(0.2f, 1, 0.2f);
+                }
+                foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
+                {
+                    item.Stop();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < ClonesParent.transform.childCount; i++)
+                {
+                    var collidor = ClonesParent.transform.GetChild(i).gameObject.GetComponent<BoxCollider>();
+                    GameObject.Destroy(collidor);
+                }
+            }
         }
 
         public void Resync()
@@ -152,10 +184,9 @@ namespace FreezeFrame
             if (ClonesParent != null && ClonesParent.scene.IsValid())
                 foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
                 {
-                    if (!item.IsPlaying("FreezeAnimation"))
+                    if (!item.IsPlaying("FreezeAnimation") && !deleteMode)
                         item.Play("FreezeAnimation");
                 }
-
         }
         /*public override void OnLateUpdate()
         {
@@ -229,9 +260,16 @@ namespace FreezeFrame
         public void DeleteLast()
         {
             MelonLogger.Msg("Deleting last Freeze Frame");
-            if (ClonesParent != null && ClonesParent.scene.IsValid() && ClonesParent.transform.childCount != 0)
+            EnsureHolderCreated();
+            Delete(ClonesParent.transform.childCount - 1);
+        }
+
+        public void Delete(int i)
+        {
+            EnsureHolderCreated();
+            if (ClonesParent.transform.childCount > i)
             {
-                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(ClonesParent.transform.childCount - 1).gameObject);
+                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(i).gameObject);
                 if (ClonesParent.transform.childCount == 0)
                 {
                     active = false;
@@ -321,6 +359,8 @@ namespace FreezeFrame
                     }
                 }
             }
+            
+            VRC_UdonTrigger.Instantiate(copy, "Delete", () => GameObject.Destroy(copy));
             return copy;
         }
 
@@ -421,6 +461,8 @@ namespace FreezeFrame
                     holder.transform.rotation = lightsource.transform.rotation;
                 }
             }
+
+            VRC_UdonTrigger.Instantiate(avatar, "Delete", () => GameObject.Destroy(avatar));
         }
     }
 }
