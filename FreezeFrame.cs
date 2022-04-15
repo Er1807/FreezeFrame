@@ -11,14 +11,13 @@ using System.ComponentModel;
 using VRC.UI.Elements.Menus;
 using System.Collections;
 using VRC.UI.Elements;
-using VRC.DataModel.Core;
 using UnityEngine.UI;
 using TMPro;
-using System.Threading;
 using VRC;
-using VRC.SDKBase;
+using System.IO;
+using UnhollowerRuntimeLib;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.3", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.4", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -35,6 +34,31 @@ namespace FreezeFrame
 
     public class FreezeFrameMod : MelonMod
     {
+
+        static FreezeFrameMod()
+        {
+            try
+            {
+                //Adapted from knah's JoinNotifier mod found here: https://github.com/knah/VRCMods/blob/master/JoinNotifier/JoinNotifierMod.cs 
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FreezeFrame.icons"))
+                using (var tempStream = new MemoryStream((int)stream.Length))
+                {
+                    stream.CopyTo(tempStream);
+                    iconsAssetBundle = AssetBundle.LoadFromMemory_Internal(tempStream.ToArray(), 0);
+                    iconsAssetBundle.hideFlags |= HideFlags.DontUnloadUnusedAsset;
+                }
+            }
+            catch (Exception e)
+            {
+                MelonLogger.Warning("Consider checking for newer version as mod possibly no longer working, Exception occured OnAppStart(): " + e.Message);
+            }
+        }
+
+        public Texture2D LoadImage(string name)
+        {
+            return iconsAssetBundle.LoadAsset_Internal($"Assets/icons/{name}.png", Il2CppType.Of<Texture2D>()).Cast<Texture2D>();
+        }
+
         public GameObject ClonesParent = null;
         private DateTime? DelayedSelf = null;
         private DateTime? DelayedAll = null;
@@ -55,29 +79,31 @@ namespace FreezeFrame
             HarmonyInstance.Patch(typeof(AssetBundle).GetMethod("Unload"), prefix: new HarmonyMethod(typeof(FreezeFrameMod).GetMethod("PrefixUnload", BindingFlags.Static | BindingFlags.Public)));
 
             animationModule = new AnimationModule(this);
-
+            var freeze = LoadImage("freeze");
+            freeze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
             VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
                    "Freeze Frame Animation",
                    delegate
                    {
                        MelonLogger.Msg("Freeze Frame Menu Opened");
-                       CustomSubMenu.AddButton("Delete Last", DeleteLast);
-                       CustomSubMenu.AddButton("Delete First",() => Delete(0));
-                       CustomSubMenu.AddButton("Freeze Self", CreateSelf);
-                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) => {
+                       CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
+                       CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
+                       CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
+                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
+                       {
                            if (state) animationModule.StartRecording(Player.prop_Player_0);
-                           else animationModule.StopRecording(); 
-                       });
-                       CustomSubMenu.AddButton("Resync Animations", Resync);
+                           else animationModule.StopRecording();
+                       }, LoadImage("record"));
+                       CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
                        CustomSubMenu.AddSubMenu("Advanced", delegate
                        {
-                           CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5));
-                           CustomSubMenu.AddButton("Delete All", Delete);
-                           CustomSubMenu.AddButton("Freeze All", Create);
-                           CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5));
-                           CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode); ;
-                       });
-                   }
+                           CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5), LoadImage("freeze 5sec"));
+                           CustomSubMenu.AddButton("Delete All", Delete, LoadImage("delete all"));
+                           CustomSubMenu.AddButton("Freeze All", Create, LoadImage("freeze all"));
+                           CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5), LoadImage("freeze all 5sec"));
+                           CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode, LoadImage("delete mode")); ;
+                       }, LoadImage("advanced"));
+                   }, freeze
                );
             MelonLogger.Msg($"Actionmenu initialised");
 
@@ -215,6 +241,7 @@ namespace FreezeFrame
         }
 
         private MenuStateController menuStateController;
+        private static AssetBundle iconsAssetBundle;
 
         private void LoadUI()
         {
@@ -327,8 +354,8 @@ namespace FreezeFrame
                 FullCopy(item);
             else
                 PerformantCopy(item);
-            
-            
+
+
         }
 
         public void FullCopyWithAnimations(GameObject player, AnimationClip animationClip)
@@ -359,7 +386,7 @@ namespace FreezeFrame
                     }
                 }
             }
-            
+
             VRC_UdonTrigger.Instantiate(copy, "Delete", () => GameObject.Destroy(copy));
             return copy;
         }
