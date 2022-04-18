@@ -1,8 +1,8 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.3.0",
-  "vrchatversion": "1169",
+  "modversion": "1.3.4",
+  "vrchatversion": "1174",
   "loaderversion": "v0.5.4",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
@@ -13,8 +13,8 @@
   "requirements": [
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.3.0/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.3.4/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Added possibility to record animations with local freezes",
+  "changelog": "Recording now saves also Blendshapes and enabled/disabled objects. Disolve and in generel shader params are not supported\nAdded delete first option and a delete mode\nRestructured the menu and it now has icons",
   "embedcolor": "7F60CA"
 }

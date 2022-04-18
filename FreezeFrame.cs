@@ -17,7 +17,7 @@ using VRC;
 using System.IO;
 using UnhollowerRuntimeLib;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.4", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.5", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -40,7 +40,7 @@ namespace FreezeFrame
             try
             {
                 //Adapted from knah's JoinNotifier mod found here: https://github.com/knah/VRCMods/blob/master/JoinNotifier/JoinNotifierMod.cs 
-                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FreezeFrame.icons"))
+                using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FreezeFrame.icons-freeze"))
                 using (var tempStream = new MemoryStream((int)stream.Length))
                 {
                     stream.CopyTo(tempStream);
@@ -56,7 +56,8 @@ namespace FreezeFrame
 
         public Texture2D LoadImage(string name)
         {
-            return iconsAssetBundle.LoadAsset_Internal($"Assets/icons/{name}.png", Il2CppType.Of<Texture2D>()).Cast<Texture2D>();
+            LoggerInstance.Msg("Loading " + name);
+            return iconsAssetBundle.LoadAsset_Internal($"Assets/icons-freeze/{name}.png", Il2CppType.Of<Texture2D>()).Cast<Texture2D>();
         }
 
         public GameObject ClonesParent = null;
@@ -81,30 +82,29 @@ namespace FreezeFrame
             animationModule = new AnimationModule(this);
             var freeze = LoadImage("freeze");
             freeze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-            VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main,
-                   "Freeze Frame Animation",
-                   delegate
-                   {
-                       MelonLogger.Msg("Freeze Frame Menu Opened");
-                       CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
-                       CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
-                       CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
-                       CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
-                       {
-                           if (state) animationModule.StartRecording(Player.prop_Player_0);
-                           else animationModule.StopRecording();
-                       }, LoadImage("record"));
-                       CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
-                       CustomSubMenu.AddSubMenu("Advanced", delegate
-                       {
-                           CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5), LoadImage("freeze 5sec"));
-                           CustomSubMenu.AddButton("Delete All", Delete, LoadImage("delete all"));
-                           CustomSubMenu.AddButton("Freeze All", Create, LoadImage("freeze all"));
-                           CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5), LoadImage("freeze all 5sec"));
-                           CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode, LoadImage("delete mode")); ;
-                       }, LoadImage("advanced"));
-                   }, freeze
-               );
+            AMUtils.AddToModsFolder("Freeze Frame Animation", delegate
+            {
+
+                MelonLogger.Msg("Freeze Frame Menu Opened");
+                CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
+                CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
+                CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
+                CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
+                {
+                    if (state) animationModule.StartRecording(Player.prop_Player_0);
+                    else animationModule.StopRecording();
+                }, LoadImage("record"));
+                CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
+                CustomSubMenu.AddSubMenu("Advanced", delegate
+                {
+                    CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5), LoadImage("freeze 5sec"));
+                    CustomSubMenu.AddButton("Delete All", Delete, LoadImage("delete all"));
+                    CustomSubMenu.AddButton("Freeze All", Create, LoadImage("freeze all"));
+                    CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5), LoadImage("freeze all 5sec"));
+                    CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode, LoadImage("delete mode")); ;
+                }, LoadImage("advanced"));
+            }, freeze);
+            
             MelonLogger.Msg($"Actionmenu initialised");
 
             var category = MelonPreferences.CreateCategory("FreezeFrame");

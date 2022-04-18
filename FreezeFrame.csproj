@@ -154,7 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="FreezeFrame.json" />
-    <EmbeddedResource Include="icons" />
+    <EmbeddedResource Include="icons-freeze" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
