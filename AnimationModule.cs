@@ -70,12 +70,12 @@ namespace FreezeFrame
             }
 
         }
-        public void StopRecording(bool calledByRemote = false)
+        public void StopRecording(bool calledByRemote = false, bool isMain = false)
         {
             if (calledByRemote && !freezeFrame.allowRemoteRecording.Value)
                 return;
             _recording = false;
-            freezeFrame.FullCopyWithAnimations(recordingPlayer, CreateClip());
+            freezeFrame.FullCopyWithAnimations(recordingPlayer, CreateClip(), isMain);
 
             if (freezeFrame.VRCWSLibaryPresent && !calledByRemote)
             {

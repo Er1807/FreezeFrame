@@ -99,7 +99,7 @@ namespace FreezeFrame
             });
             
         }
-
+        [MethodImpl(MethodImplOptions.NoInlining)]
         public static void CreateFreezeOf(FreezeAction action, string ofPlayer = "all")
         {
             var rootObjects = SceneManager.GetActiveScene().GetRootGameObjects();

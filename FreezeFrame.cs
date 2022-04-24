@@ -16,8 +16,10 @@ using TMPro;
 using VRC;
 using System.IO;
 using UnhollowerRuntimeLib;
+using VRC.SDK3.Dynamics.PhysBone.Components;
+using VRC.Dynamics;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.5", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.6", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -89,10 +91,15 @@ namespace FreezeFrame
                 CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
                 CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
                 CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
-                CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
+                CustomSubMenu.AddToggle("Record Sub", animationModule.Recording, (state) =>
                 {
                     if (state) animationModule.StartRecording(Player.prop_Player_0);
                     else animationModule.StopRecording();
+                }, LoadImage("record")); 
+                CustomSubMenu.AddToggle("Record Main", animationModule.Recording, (state) =>
+                {
+                    if (state) animationModule.StartRecording(Player.prop_Player_0);
+                    else animationModule.StopRecording(isMain: true);
                 }, LoadImage("record"));
                 CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
                 CustomSubMenu.AddSubMenu("Advanced", delegate
@@ -208,10 +215,21 @@ namespace FreezeFrame
                 AnimationModule.CurrentTime += Time.deltaTime;
             }
             if (ClonesParent != null && ClonesParent.scene.IsValid())
-                foreach (var item in ClonesParent.GetComponentsInChildren<Animation>())
+                foreach (var anim in ClonesParent.GetComponentsInChildren<Animation>())
                 {
-                    if (!item.IsPlaying("FreezeAnimation") && !deleteMode)
-                        item.Play("FreezeAnimation");
+                    if (!anim.IsPlaying("FreezeAnimation") && !deleteMode)
+                    {
+                        anim.Play("FreezeAnimation");
+                        if (anim.gameObject.GetComponent<VRC_FreezeData>().IsMain)
+                        {
+                            foreach (var anim2 in ClonesParent.GetComponentsInChildren<Animation>())
+                            {
+                                anim2.Stop();
+                                anim2.Play("FreezeAnimation");
+                            }
+                                
+                        }
+                    }
                 }
         }
         /*public override void OnLateUpdate()
@@ -286,7 +304,6 @@ namespace FreezeFrame
 
         public void DeleteLast()
         {
-            MelonLogger.Msg("Deleting last Freeze Frame");
             EnsureHolderCreated();
             Delete(ClonesParent.transform.childCount - 1);
         }
@@ -294,9 +311,10 @@ namespace FreezeFrame
         public void Delete(int i)
         {
             EnsureHolderCreated();
-            if (ClonesParent.transform.childCount > i)
+            if (ClonesParent.transform.childCount > i && i>=0)
             {
-                GameObject.Destroy(ClonesParent.gameObject.transform.GetChild(i).gameObject);
+                MelonLogger.Msg($"Deleting Frame {i}");
+                GameObject.DestroyImmediate(ClonesParent.gameObject.transform.GetChild(i).gameObject);
                 if (ClonesParent.transform.childCount == 0)
                 {
                     active = false;
@@ -358,10 +376,13 @@ namespace FreezeFrame
 
         }
 
-        public void FullCopyWithAnimations(GameObject player, AnimationClip animationClip)
+        public void FullCopyWithAnimations(GameObject player, AnimationClip animationClip, bool isMain)
         {
             EnsureHolderCreated();
             var copy = FullCopy(player);
+
+            copy.AddComponent<VRC_FreezeData>().IsMain = isMain;
+
             var animator = copy.AddComponent<Animation>();
             animator.AddClip(animationClip, animationClip.name);
             animator.Play(animationClip.name);
@@ -385,6 +406,14 @@ namespace FreezeFrame
                         GameObject.Destroy(copycomp);
                     }
                 }
+            }
+
+            var pbComponents = copy.GetComponentsInChildren<VRCPhysBone>();
+            foreach (var pb in pbComponents)
+            {
+                var byteArray = Guid.NewGuid().ToByteArray();
+                pb.chainId = BitConverter.ToUInt64(byteArray, 0);
+                PhysBoneManager.Inst.AddPhysBone(pb);
             }
 
             VRC_UdonTrigger.Instantiate(copy, "Delete", () => GameObject.Destroy(copy));
