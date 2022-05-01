@@ -19,7 +19,7 @@ using UnhollowerRuntimeLib;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.7", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.8", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -414,6 +414,8 @@ namespace FreezeFrame
                 pb.chainId = BitConverter.ToUInt64(byteArray, 0);
                 PhysBoneManager.Inst.AddPhysBone(pb);
             }
+
+            copy.GetComponentsInChildren<SkinnedMeshRenderer>().Do(x => x.castShadows = true);
 
             VRC_UdonTrigger.Instantiate(copy, "Delete", () => GameObject.Destroy(copy));
             return copy;
