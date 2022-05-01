@@ -91,19 +91,10 @@ namespace FreezeFrame
 
             MelonPreferences_Entry<bool> showInModMenu = category.CreateEntry("UseModMenu", false, "Use the AM Mods Category");
             if (showInModMenu.Value)
-            {
-                AMUtils.AddToModsFolder("Freeze Frame Animation", delegate
-                {
-                    CreateActionMenu(freeze);
-                }, freeze);
-            }
+                AMUtils.AddToModsFolder("Freeze Frame Animation",CreateActionMenu, freeze);
             else
-            {
-                VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main, "Freeze Frame Animation", delegate
-                {
-                    CreateActionMenu(freeze);
-                }, freeze);
-            }
+                VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main, "Freeze Frame Animation", CreateActionMenu, freeze);
+            
             
             MelonLogger.Msg($"Actionmenu initialised");
 
@@ -117,12 +108,12 @@ namespace FreezeFrame
             MelonCoroutines.Start(WaitForUIInit());
         }
 
-        private void CreateActionMenu(Texture2D freeze)
+        private void CreateActionMenu()
         {
             MelonLogger.Msg("Freeze Frame Menu Opened");
             CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
             CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
-            CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
+            CustomSubMenu.AddButton("Freeze Self", CreateSelf, LoadImage("freeze"));
             CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
             {
                 if (state) animationModule.StartRecording(Player.prop_Player_0);
@@ -248,16 +239,7 @@ namespace FreezeFrame
                     }
                 }
         }
-        /*public override void OnLateUpdate()
-        {
-            if (animationModule.Recording && animationModule.RemoteRecording)
-            {
-                //animationModule.Record();
-
-                //AnimationModule.CurrentTime += Time.deltaTime;
-            }
-        }*/
-
+        
         private void CreateSelf()
         {
             var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
