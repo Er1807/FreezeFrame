@@ -396,7 +396,8 @@ namespace FreezeFrame
         {
             EnsureHolderCreated();
             var copy = FullCopy(player);
-
+            if(isMain==true)
+                ClonesParent.GetComponentsInChildren<VRC_FreezeData>().Do(x=>x.IsMain = false);
             copy.AddComponent<VRC_FreezeData>().IsMain = isMain;
 
             var animator = copy.AddComponent<Animation>();
