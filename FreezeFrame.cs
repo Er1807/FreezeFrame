@@ -19,7 +19,7 @@ using UnhollowerRuntimeLib;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.6", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.7", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -58,7 +58,6 @@ namespace FreezeFrame
 
         public Texture2D LoadImage(string name)
         {
-            LoggerInstance.Msg("Loading " + name);
             return iconsAssetBundle.LoadAsset_Internal($"Assets/icons-freeze/{name}.png", Il2CppType.Of<Texture2D>()).Cast<Texture2D>();
         }
 
@@ -84,40 +83,29 @@ namespace FreezeFrame
             animationModule = new AnimationModule(this);
             var freeze = LoadImage("freeze");
             freeze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
-            AMUtils.AddToModsFolder("Freeze Frame Animation", delegate
-            {
-
-                MelonLogger.Msg("Freeze Frame Menu Opened");
-                CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
-                CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
-                CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
-                CustomSubMenu.AddToggle("Record Sub", animationModule.Recording, (state) =>
-                {
-                    if (state) animationModule.StartRecording(Player.prop_Player_0);
-                    else animationModule.StopRecording();
-                }, LoadImage("record")); 
-                CustomSubMenu.AddToggle("Record Main", animationModule.Recording, (state) =>
-                {
-                    if (state) animationModule.StartRecording(Player.prop_Player_0);
-                    else animationModule.StopRecording(isMain: true);
-                }, LoadImage("record"));
-                CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
-                CustomSubMenu.AddSubMenu("Advanced", delegate
-                {
-                    CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5), LoadImage("freeze 5sec"));
-                    CustomSubMenu.AddButton("Delete All", Delete, LoadImage("delete all"));
-                    CustomSubMenu.AddButton("Freeze All", Create, LoadImage("freeze all"));
-                    CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5), LoadImage("freeze all 5sec"));
-                    CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode, LoadImage("delete mode")); ;
-                }, LoadImage("advanced"));
-            }, freeze);
-            
-            MelonLogger.Msg($"Actionmenu initialised");
 
             var category = MelonPreferences.CreateCategory("FreezeFrame");
             MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
             freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description: "Full Freeze is more accurate and copys everything but is less performant");
             recordBlendshapes = category.CreateEntry("recordBlendshapes", true, display_name: "Record Blendshapes", description: "Blendshape Recording can quite limit the performance you can disable it here");
+
+            MelonPreferences_Entry<bool> showInModMenu = category.CreateEntry("UseModMenu", false, "Use the AM Mods Category");
+            if (showInModMenu.Value)
+            {
+                AMUtils.AddToModsFolder("Freeze Frame Animation", delegate
+                {
+                    CreateActionMenu(freeze);
+                }, freeze);
+            }
+            else
+            {
+                VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main, "Freeze Frame Animation", delegate
+                {
+                    CreateActionMenu(freeze);
+                }, freeze);
+            }
+            
+            MelonLogger.Msg($"Actionmenu initialised");
 
             if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
             {
@@ -127,6 +115,34 @@ namespace FreezeFrame
             }
 
             MelonCoroutines.Start(WaitForUIInit());
+        }
+
+        private void CreateActionMenu(Texture2D freeze)
+        {
+            MelonLogger.Msg("Freeze Frame Menu Opened");
+            CustomSubMenu.AddButton("Delete Last", DeleteLast, LoadImage("delete last"));
+            CustomSubMenu.AddButton("Delete First", () => Delete(0), LoadImage("delete first"));
+            CustomSubMenu.AddButton("Freeze Self", CreateSelf, freeze);
+            CustomSubMenu.AddToggle("Record", animationModule.Recording, (state) =>
+            {
+                if (state) animationModule.StartRecording(Player.prop_Player_0);
+                else animationModule.StopRecording();
+            }, LoadImage("record"));
+
+            CustomSubMenu.AddButton("Resync Animations", Resync, LoadImage("resync"));
+            CustomSubMenu.AddSubMenu("Advanced", delegate
+            {
+                CustomSubMenu.AddButton("Freeze Self (5s)", () => DelayedSelf = DateTime.Now.AddSeconds(5), LoadImage("freeze 5sec"));
+                CustomSubMenu.AddButton("Delete All", Delete, LoadImage("delete all"));
+                CustomSubMenu.AddButton("Freeze All", Create, LoadImage("freeze all"));
+                CustomSubMenu.AddButton("Freeze All (5s)", () => DelayedAll = DateTime.Now.AddSeconds(5), LoadImage("freeze all 5sec"));
+                CustomSubMenu.AddToggle("Record Time Limit", animationModule.Recording, (state) =>
+                {
+                    if (state) animationModule.StartRecording(Player.prop_Player_0);
+                    else animationModule.StopRecording(isMain: true);
+                }, LoadImage("record"));
+                CustomSubMenu.AddToggle("Delete Mode", deleteMode, SwitchDeleteMode, LoadImage("delete mode")); ;
+            }, LoadImage("advanced"));
         }
 
         private void SwitchDeleteMode(bool state)
