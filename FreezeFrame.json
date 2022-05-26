@@ -1,20 +1,20 @@
 {
   "_id": 251,
   "name": "FreezeFrame",
-  "modversion": "1.3.4",
-  "vrchatversion": "1174",
+  "modversion": "1.3.8",
+  "vrchatversion": "1192",
   "loaderversion": "v0.5.4",
   "modtype": "Mod",
   "author": "Eric van Fandenfart",
-  "description": "Creates a Freeze Frame locally of all avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu\n\n With [VRCWS](https://github.com/Er1807/VRCWS) the event of taking a freeze is synchronized between all members in the lobby that also have VRCWS and FreezeFrame and are connected to the same VRCWS server",
+  "description": "Creates a Freeze Frame locally of avatars in a world by creating a copy of each avatar. The avatar is in the state the Freeze Frame was activated. Freeze Frames can be stacked and all Freeze Frames can be deleted afterward.\nThe buttons to create an delete Freeze Frames are found in the action menu and on the player quick menu\nIts also possible to record animations and play them back afterwards\n\n With [VRCWS](https://github.com/Er1807/VRCWS) the event of taking a freeze is synchronized between all members in the lobby that also have VRCWS and FreezeFrame and are connected to the same VRCWS server",
   "searchtags": [
     "Camera", "Freeze"
   ],
   "requirements": [
     "[ActionMenuApi](https://github.com/gompocp/ActionMenuApi)"
   ],
-  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.3.4/FreezeFrame.dll",
+  "downloadlink": "https://github.com/Er1807/FreezeFrame/releases/download/v1.3.8/FreezeFrame.dll",
   "sourcelink": "https://github.com/Er1807/FreezeFrame",
-  "changelog": "Recording now saves also Blendshapes and enabled/disabled objects. Disolve and in generel shader params are not supported\nAdded delete first option and a delete mode\nRestructured the menu and it now has icons",
+  "changelog": "Added option to use the AM Menu\nAdded Icons\nPhysbone interactions\nCreate a Time limit recording which all other recordings will use to synchronize\nAdded Shadows to clones if the worlds supports it (realtime lighting)",
   "embedcolor": "7F60CA"
 }

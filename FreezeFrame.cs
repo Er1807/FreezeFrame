@@ -19,7 +19,7 @@ using UnhollowerRuntimeLib;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.3.8", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.0", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -70,6 +70,7 @@ namespace FreezeFrame
         public MelonPreferences_Entry<FreezeType> freezeType;
         public MelonPreferences_Entry<bool> allowRemoteRecording;
         public MelonPreferences_Entry<bool> recordBlendshapes;
+        public MelonPreferences_Entry<int> skipFrames;
         public AnimationModule animationModule;
 
         private bool deleteMode;
@@ -81,6 +82,8 @@ namespace FreezeFrame
             HarmonyInstance.Patch(typeof(AssetBundle).GetMethod("Unload"), prefix: new HarmonyMethod(typeof(FreezeFrameMod).GetMethod("PrefixUnload", BindingFlags.Static | BindingFlags.Public)));
 
             animationModule = new AnimationModule(this);
+
+            MelonCoroutines.Start(RecordingCoroutine());
             var freeze = LoadImage("freeze");
             freeze.hideFlags |= HideFlags.DontUnloadUnusedAsset;
 
@@ -88,14 +91,15 @@ namespace FreezeFrame
             MelonPreferences_Entry<bool> onlyTrusted = category.CreateEntry("Only Trusted", false);
             freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description: "Full Freeze is more accurate and copys everything but is less performant");
             recordBlendshapes = category.CreateEntry("recordBlendshapes", true, display_name: "Record Blendshapes", description: "Blendshape Recording can quite limit the performance you can disable it here");
+            skipFrames = category.CreateEntry("skipFrames", 0, display_name: "Skip Frames", description: "Amount of frames to skip between recordings");
 
             MelonPreferences_Entry<bool> showInModMenu = category.CreateEntry("UseModMenu", false, "Use the AM Mods Category");
             if (showInModMenu.Value)
-                AMUtils.AddToModsFolder("Freeze Frame Animation",CreateActionMenu, freeze);
+                AMUtils.AddToModsFolder("Freeze Frame Animation", CreateActionMenu, freeze);
             else
                 VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main, "Freeze Frame Animation", CreateActionMenu, freeze);
-            
-            
+
+
             MelonLogger.Msg($"Actionmenu initialised");
 
             if (MelonHandler.Mods.Any(x => x.Info.Name == "VRCWSLibary"))
@@ -199,6 +203,7 @@ namespace FreezeFrame
             unloadAllLoadedObjects = false;
             StillLoaded.Add(__instance);
         }
+
         public override void OnUpdate()
         {
             if (VRCWSLibaryIntegration.AsyncUtils._toMainThreadQueue.TryDequeue(out Action result))
@@ -215,12 +220,13 @@ namespace FreezeFrame
                 Create();
             }
 
-            if (animationModule.Recording /* && !animationModule.RemoteRecording*/)
-            {
-                animationModule.Record();
+            //if (animationModule.Recording)
+            //{
+            //    if(Time.frameCount % (skipFrames.Value + 1) == 0)
+            //        animationModule.Record();
 
-                AnimationModule.CurrentTime += Time.deltaTime;
-            }
+            //    AnimationModule.CurrentTime += Time.deltaTime;
+            //}
             if (ClonesParent != null && ClonesParent.scene.IsValid())
                 foreach (var anim in ClonesParent.GetComponentsInChildren<Animation>())
                 {
@@ -234,12 +240,27 @@ namespace FreezeFrame
                                 anim2.Stop();
                                 anim2.Play("FreezeAnimation");
                             }
-                                
+
                         }
                     }
                 }
         }
-        
+        public IEnumerator RecordingCoroutine()
+        {
+            while (true)
+            {
+                yield return new WaitForEndOfFrame();
+
+                if (animationModule.Recording)
+                {
+                    if (Time.frameCount % (skipFrames.Value + 1) == 0)
+                        animationModule.Record();
+
+                    AnimationModule.CurrentTime += Time.deltaTime;
+                }
+            }
+        }
+
         private void CreateSelf()
         {
             var player = VRCPlayer.field_Internal_Static_VRCPlayer_0.gameObject;
@@ -309,7 +330,7 @@ namespace FreezeFrame
         public void Delete(int i)
         {
             EnsureHolderCreated();
-            if (ClonesParent.transform.childCount > i && i>=0)
+            if (ClonesParent.transform.childCount > i && i >= 0)
             {
                 MelonLogger.Msg($"Deleting Frame {i}");
                 GameObject.DestroyImmediate(ClonesParent.gameObject.transform.GetChild(i).gameObject);
@@ -378,8 +399,8 @@ namespace FreezeFrame
         {
             EnsureHolderCreated();
             var copy = FullCopy(player);
-            if(isMain==true)
-                ClonesParent.GetComponentsInChildren<VRC_FreezeData>().Do(x=>x.IsMain = false);
+            if (isMain == true)
+                ClonesParent.GetComponentsInChildren<VRC_FreezeData>().Do(x => x.IsMain = false);
             copy.AddComponent<VRC_FreezeData>().IsMain = isMain;
 
             var animator = copy.AddComponent<Animation>();

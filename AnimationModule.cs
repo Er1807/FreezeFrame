@@ -110,8 +110,6 @@ namespace FreezeFrame
                 }
 
             }
-
-
             return clip;
         }
 
