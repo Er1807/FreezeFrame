@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
+using MelonLoader;
 using UnityEngine;
 using VRC;
 
@@ -94,10 +96,14 @@ namespace FreezeFrame
             var transformType = UnhollowerRuntimeLib.Il2CppType.Of<Transform>();
             var skinnedMeshrendererType = UnhollowerRuntimeLib.Il2CppType.Of<SkinnedMeshRenderer>();
             var gameObjectType = UnhollowerRuntimeLib.Il2CppType.Of<GameObject>();
+            
+            float loopingDelay = freezeFrame.smoothLoopingDuration.Value;
             foreach (var item in AnimationsCache)
             {
                 if (item.Value.Property.StartsWith("blendShape"))
                 {
+                    if(loopingDelay > 0)
+                        FixLooping(item.Value.Curve);
                     clip.SetCurve(item.Value.Path, skinnedMeshrendererType, item.Value.Property, item.Value.Curve);
                 }
                 else if (item.Value.Property == "m_IsActive")
@@ -106,13 +112,24 @@ namespace FreezeFrame
                 }
                 else
                 {
+                    if(loopingDelay > 0)
+                        FixLooping(item.Value.Curve);
                     clip.SetCurve(item.Value.Path, transformType, item.Value.Property, item.Value.Curve);
                 }
-
             }
             return clip;
-        }
 
+            void FixLooping(AnimationCurve curve)
+            {
+                curve.preWrapMode = WrapMode.Loop;
+                curve.postWrapMode = WrapMode.Loop;
+                
+                Keyframe frame = curve.GetKey(0);
+                frame.time = CurrentTime + loopingDelay;
+                frame.weightedMode = WeightedMode.None;
+                curve.AddKey(frame);
+            }
+        }
 
         public void Record(Transform transform = null, string path = "")
         {
