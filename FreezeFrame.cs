@@ -6,18 +6,18 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEngine;
 using System.ComponentModel;
 using VRC.UI.Elements.Menus;
 using System.Collections;
-using VRC.UI.Elements;
 using UnityEngine.UI;
 using TMPro;
-using VRC;
 using System.IO;
 using UnhollowerRuntimeLib;
+using UnityEngine;
+using VRC;
 using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
+using VRC.UI.Elements;
 
 [assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.0", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
@@ -71,6 +71,8 @@ namespace FreezeFrame
         public MelonPreferences_Entry<bool> allowRemoteRecording;
         public MelonPreferences_Entry<bool> recordBlendshapes;
         public MelonPreferences_Entry<int> skipFrames;
+        public MelonPreferences_Entry<float> smoothLoopingDuration;
+        
         public AnimationModule animationModule;
 
         private bool deleteMode;
@@ -98,7 +100,8 @@ namespace FreezeFrame
                 AMUtils.AddToModsFolder("Freeze Frame Animation", CreateActionMenu, freeze);
             else
                 VRCActionMenuPage.AddSubMenu(ActionMenuPage.Main, "Freeze Frame Animation", CreateActionMenu, freeze);
-
+            
+            smoothLoopingDuration = category.CreateEntry("smoothLoopingDuration", 0.2f, "Smoothing Duration", "Duration of loop smoothing");
 
             MelonLogger.Msg($"Actionmenu initialised");
 
