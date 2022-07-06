@@ -19,7 +19,7 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
 using VRC.UI.Elements;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.1", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.2", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
