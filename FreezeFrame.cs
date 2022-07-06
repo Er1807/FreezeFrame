@@ -19,7 +19,7 @@ using VRC.SDK3.Dynamics.PhysBone.Components;
 using VRC.Dynamics;
 using VRC.UI.Elements;
 
-[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.0", "Eric van Fandenfart")]
+[assembly: MelonInfo(typeof(FreezeFrameMod), "FreezeFrame", "1.4.1", "Eric van Fandenfart")]
 [assembly: MelonAdditionalDependencies("ActionMenuApi")]
 [assembly: MelonOptionalDependencies("VRCWSLibary")]
 [assembly: MelonGame]
@@ -70,6 +70,7 @@ namespace FreezeFrame
         public MelonPreferences_Entry<FreezeType> freezeType;
         public MelonPreferences_Entry<bool> allowRemoteRecording;
         public MelonPreferences_Entry<bool> recordBlendshapes;
+        public MelonPreferences_Entry<bool> copyPhysBones;
         public MelonPreferences_Entry<int> skipFrames;
         public MelonPreferences_Entry<float> smoothLoopingDuration;
         
@@ -94,6 +95,7 @@ namespace FreezeFrame
             freezeType = category.CreateEntry("FreezeType", FreezeType.PerformanceFreeze, display_name: "Freeze Type", description: "Full Freeze is more accurate and copys everything but is less performant");
             recordBlendshapes = category.CreateEntry("recordBlendshapes", true, display_name: "Record Blendshapes", description: "Blendshape Recording can quite limit the performance you can disable it here");
             skipFrames = category.CreateEntry("skipFrames", 0, display_name: "Skip Frames", description: "Amount of frames to skip between recordings");
+            copyPhysBones = category.CreateEntry("copyPhysBones", true, display_name: "Copy Physbones", description: "Copy Physbones to freeze frame");
 
             MelonPreferences_Entry<bool> showInModMenu = category.CreateEntry("UseModMenu", false, "Use the AM Mods Category");
             if (showInModMenu.Value)
@@ -417,7 +419,9 @@ namespace FreezeFrame
             var obj = temp.gameObject;
             var copy = GameObject.Instantiate(obj, ClonesParent.transform, true);
             copy.name = "Avatar Clone";
-            UpdateLayerRecurive(copy);
+
+            copy.GetComponent<Animator>().GetBoneTransform(HumanBodyBones.Head).localScale = Vector3.one;
+            Tools.SetLayerRecursively(copy, LayerMask.NameToLayer("Player"));
             UpdateShadersRecurive(copy, obj);
 
             if (obj.layer == LayerMask.NameToLayer("PlayerLocal"))
@@ -432,33 +436,18 @@ namespace FreezeFrame
             }
 
             var pbComponents = copy.GetComponentsInChildren<VRCPhysBone>();
-            foreach (var pb in pbComponents)
-            {
-                var byteArray = Guid.NewGuid().ToByteArray();
-                pb.chainId = BitConverter.ToUInt64(byteArray, 0);
-                PhysBoneManager.Inst.AddPhysBone(pb);
-            }
+            if (copyPhysBones.Value)
+                foreach (var pb in pbComponents)
+                {
+                    var byteArray = Guid.NewGuid().ToByteArray();
+                    pb.chainId = BitConverter.ToUInt64(byteArray, 0);
+                    PhysBoneManager.Inst.AddPhysBone(pb);
+                }
 
             copy.GetComponentsInChildren<SkinnedMeshRenderer>().Do(x => x.castShadows = true);
 
             VRC_UdonTrigger.Instantiate(copy, "Delete", () => GameObject.Destroy(copy));
             return copy;
-        }
-
-        public void UpdateLayerRecurive(GameObject obj)
-        {
-            obj.layer = LayerMask.NameToLayer("Player");
-            //Restore head. Hope no one changes the scale from 1,1,1
-            if (obj.transform.localScale == new Vector3(0.0001f, 0.0001f, 0.0001f))
-            {
-                obj.transform.localScale = new Vector3(1, 1, 1);
-            }
-
-            for (int i = 0; i < obj.transform.GetChildCount(); i++)
-            {
-                UpdateLayerRecurive(obj.transform.GetChild(i).gameObject);
-            }
-
         }
 
         public void UpdateShadersRecurive(GameObject copy, GameObject original)
