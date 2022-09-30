@@ -1,3 +1,5 @@
+Now handled under the following repo https://github.com/Er1807/CVR-Mods
+
 # FreezeFrame
 Create local Freeze Frames of Avatars in VRC
 
